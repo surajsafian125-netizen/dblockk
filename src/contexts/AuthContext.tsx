@@ -1,18 +1,15 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-
-interface User {
-  email: string;
-  name: string;
-}
+import { supabase } from '@/integrations/supabase/client';
+import type { User } from '@supabase/supabase-js';
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   isAdmin: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<{ error?: string }>;
+  signup: (name: string, email: string, password: string) => Promise<{ error?: string }>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -26,40 +23,74 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const checkAdmin = async (userId: string) => {
+    const { data } = await supabase.rpc('has_role', { _user_id: userId, _role: 'admin' });
+    setIsAdmin(!!data);
+  };
 
   useEffect(() => {
-    const stored = localStorage.getItem('pulse_user');
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored));
-      } catch {
-        localStorage.removeItem('pulse_user');
+    // Set up auth listener BEFORE checking session
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+
+      if (session?.user) {
+        // Defer admin check to avoid Supabase client deadlock
+        setTimeout(() => checkAdmin(session.user.id), 0);
+      } else {
+        setIsAdmin(false);
       }
-    }
-    setIsLoading(false);
+    });
+
+    // Then check existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+      if (session?.user) {
+        checkAdmin(session.user.id);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string, _password: string) => {
-    const u = { email, name: email.split('@')[0] };
-    localStorage.setItem('pulse_user', JSON.stringify(u));
-    setUser(u);
+  const login = async (email: string, password: string): Promise<{ error?: string }> => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error: error.message };
+    return {};
   };
 
-  const signup = async (name: string, email: string, _password: string) => {
-    const u = { email, name };
-    localStorage.setItem('pulse_user', JSON.stringify(u));
-    setUser(u);
+  const signup = async (name: string, email: string, password: string): Promise<{ error?: string }> => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: name },
+        emailRedirectTo: window.location.origin,
+      },
+    });
+    if (error) return { error: error.message };
+    return {};
   };
 
-  const logout = () => {
-    localStorage.removeItem('pulse_user');
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
+    setIsAdmin(false);
   };
-
-  const isAdmin = user?.email === 'surajmohammed129@gmail.com';
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, isAdmin, login, signup, logout }}>
+    <AuthContext.Provider value={{
+      user,
+      isAuthenticated: !!user,
+      isLoading,
+      isAdmin,
+      login,
+      signup,
+      logout,
+    }}>
       {children}
     </AuthContext.Provider>
   );
