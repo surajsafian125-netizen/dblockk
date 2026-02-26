@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_settings: {
+        Row: {
+          engagement_change: string | null
+          engagement_rate: string | null
+          growth: string | null
+          growth_change: string | null
+          id: string
+          total_users: string | null
+          total_views: string | null
+          updated_at: string | null
+          users_change: string | null
+          views_change: string | null
+        }
+        Insert: {
+          engagement_change?: string | null
+          engagement_rate?: string | null
+          growth?: string | null
+          growth_change?: string | null
+          id?: string
+          total_users?: string | null
+          total_views?: string | null
+          updated_at?: string | null
+          users_change?: string | null
+          views_change?: string | null
+        }
+        Update: {
+          engagement_change?: string | null
+          engagement_rate?: string | null
+          growth?: string | null
+          growth_change?: string | null
+          id?: string
+          total_users?: string | null
+          total_views?: string | null
+          updated_at?: string | null
+          users_change?: string | null
+          views_change?: string | null
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           content: string
@@ -83,25 +122,55 @@ export type Database = {
           category: string
           content: string
           created_at: string | null
+          description: string | null
+          engagement_score: number | null
           id: string
+          image_url: string | null
+          is_trending: boolean | null
+          likes_count: number | null
+          published: boolean | null
+          reading_time: number | null
+          tags: string[] | null
           title: string
           user_id: string
+          video_url: string | null
+          views: number | null
         }
         Insert: {
           category: string
           content: string
           created_at?: string | null
+          description?: string | null
+          engagement_score?: number | null
           id?: string
+          image_url?: string | null
+          is_trending?: boolean | null
+          likes_count?: number | null
+          published?: boolean | null
+          reading_time?: number | null
+          tags?: string[] | null
           title: string
           user_id: string
+          video_url?: string | null
+          views?: number | null
         }
         Update: {
           category?: string
           content?: string
           created_at?: string | null
+          description?: string | null
+          engagement_score?: number | null
           id?: string
+          image_url?: string | null
+          is_trending?: boolean | null
+          likes_count?: number | null
+          published?: boolean | null
+          reading_time?: number | null
+          tags?: string[] | null
           title?: string
           user_id?: string
+          video_url?: string | null
+          views?: number | null
         }
         Relationships: []
       }

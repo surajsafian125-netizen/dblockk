@@ -7,6 +7,7 @@ import AnalyticsDashboard from '@/components/AnalyticsDashboard';
 import ProjectEstimator from '@/components/ProjectEstimator';
 import FloatingActionButton from '@/components/FloatingActionButton';
 import ParticleBackground from '@/components/ParticleBackground';
+import Footer from '@/components/Footer';
 
 const Index = () => {
   const { isAuthenticated } = useAuth();
@@ -29,6 +30,7 @@ const Index = () => {
           </motion.div>
         )}
       </div>
+      <Footer />
       <FloatingActionButton />
     </div>
   );

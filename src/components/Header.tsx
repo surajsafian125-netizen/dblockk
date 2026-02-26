@@ -27,7 +27,7 @@ const Header = () => {
       >
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="font-display text-xl font-bold">
-            <span className="text-primary text-glow">PULSE</span>
+            <span className="text-primary text-glow">D'Block</span>
           </Link>
           <div className="flex items-center gap-3">
             <ThemeToggle />

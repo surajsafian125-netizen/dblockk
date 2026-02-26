@@ -23,9 +23,7 @@ const Hero = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.8 }}
         >
-          News <span className="text-primary text-glow">🔥</span>{' '}
-          Hustle <span className="text-accent">💼</span>{' '}
-          Vibes <span className="text-primary text-glow">🌊</span>
+          <span className="text-primary text-glow">D'Block</span>
         </motion.h1>
 
         <motion.p
@@ -34,7 +32,7 @@ const Hero = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.8 }}
         >
-          Your AI-powered content hub for everything that matters. Stay informed, stay inspired, stay ahead.
+          Ask. Discover. Elevate.
         </motion.p>
 
         {isAuthenticated ? (
