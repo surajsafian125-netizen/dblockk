@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Eye, Heart, Clock, TrendingUp, Flame } from 'lucide-react';
 import { useState } from 'react';
-import type { Post } from '@/data/mockData';
+import type { PostDisplay } from './ContentGrid';
 
 const categoryClass: Record<string, string> = {
   news: 'bg-category-news/10 text-category-news',
@@ -9,7 +9,7 @@ const categoryClass: Record<string, string> = {
   vibes: 'bg-category-vibes/10 text-category-vibes',
 };
 
-const ContentCard = ({ post, index }: { post: Post; index: number }) => {
+const ContentCard = ({ post, index }: { post: PostDisplay; index: number }) => {
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(post.likes);
 
@@ -41,7 +41,7 @@ const ContentCard = ({ post, index }: { post: Post; index: number }) => {
             <Flame className="h-3 w-3" /> Hot 🔥
           </div>
         )}
-        <div className={`absolute top-3 left-3 rounded-full px-2.5 py-1 text-xs font-medium backdrop-blur-sm ${categoryClass[post.category]}`}>
+        <div className={`absolute top-3 left-3 rounded-full px-2.5 py-1 text-xs font-medium backdrop-blur-sm ${categoryClass[post.category] || 'glass'}`}>
           {post.category.charAt(0).toUpperCase() + post.category.slice(1)}
         </div>
       </div>

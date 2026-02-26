@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Users, Eye, Activity } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const viewsData = [
   { name: 'Mon', views: 4000 },
@@ -18,14 +20,35 @@ const categoryData = [
   { name: 'Vibes', value: 3200 },
 ];
 
-const stats = [
-  { label: 'Total Views', value: '124.5K', icon: Eye, change: '+12.5%' },
-  { label: 'Total Users', value: '8,432', icon: Users, change: '+8.2%' },
-  { label: 'Engagement', value: '78.3%', icon: Activity, change: '+5.1%' },
-  { label: 'Growth', value: '+23%', icon: TrendingUp, change: '+3.4%' },
-];
-
 const AnalyticsDashboard = () => {
+  const [stats, setStats] = useState([
+    { label: 'Total Views', value: '124.5K', icon: Eye, change: '+12.5%' },
+    { label: 'Total Users', value: '8,432', icon: Users, change: '+8.2%' },
+    { label: 'Engagement', value: '78.3%', icon: Activity, change: '+5.1%' },
+    { label: 'Growth', value: '+23%', icon: TrendingUp, change: '+3.4%' },
+  ]);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      const { data } = await supabase
+        .from('analytics_settings')
+        .select('*')
+        .limit(1)
+        .single();
+
+      if (data) {
+        setStats([
+          { label: 'Total Views', value: data.total_views || '0', icon: Eye, change: data.views_change || '+0%' },
+          { label: 'Total Users', value: data.total_users || '0', icon: Users, change: data.users_change || '+0%' },
+          { label: 'Engagement', value: data.engagement_rate || '0%', icon: Activity, change: data.engagement_change || '+0%' },
+          { label: 'Growth', value: data.growth || '0%', icon: TrendingUp, change: data.growth_change || '+0%' },
+        ]);
+      }
+    };
+
+    fetchAnalytics();
+  }, []);
+
   return (
     <section className="container mx-auto px-4 py-16">
       <motion.h2
@@ -37,7 +60,6 @@ const AnalyticsDashboard = () => {
         Platform <span className="text-primary text-glow">Analytics</span>
       </motion.h2>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {stats.map((stat, i) => (
           <motion.div
@@ -64,7 +86,6 @@ const AnalyticsDashboard = () => {
         ))}
       </div>
 
-      {/* Charts */}
       <div className="grid md:grid-cols-2 gap-6">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -78,14 +99,7 @@ const AnalyticsDashboard = () => {
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 20%)" />
               <XAxis dataKey="name" stroke="hsl(215, 15%, 55%)" fontSize={12} />
               <YAxis stroke="hsl(215, 15%, 55%)" fontSize={12} />
-              <Tooltip
-                contentStyle={{
-                  background: 'hsl(220, 25%, 10%)',
-                  border: '1px solid hsl(190, 95%, 55%, 0.2)',
-                  borderRadius: '12px',
-                  color: 'hsl(210, 20%, 95%)',
-                }}
-              />
+              <Tooltip contentStyle={{ background: 'hsl(220, 25%, 10%)', border: '1px solid hsl(190, 95%, 55%, 0.2)', borderRadius: '12px', color: 'hsl(210, 20%, 95%)' }} />
               <Line type="monotone" dataKey="views" stroke="hsl(190, 95%, 55%)" strokeWidth={2} dot={{ fill: 'hsl(190, 95%, 55%)', r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
@@ -103,21 +117,13 @@ const AnalyticsDashboard = () => {
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 20%)" />
               <XAxis dataKey="name" stroke="hsl(215, 15%, 55%)" fontSize={12} />
               <YAxis stroke="hsl(215, 15%, 55%)" fontSize={12} />
-              <Tooltip
-                contentStyle={{
-                  background: 'hsl(220, 25%, 10%)',
-                  border: '1px solid hsl(190, 95%, 55%, 0.2)',
-                  borderRadius: '12px',
-                  color: 'hsl(210, 20%, 95%)',
-                }}
-              />
+              <Tooltip contentStyle={{ background: 'hsl(220, 25%, 10%)', border: '1px solid hsl(190, 95%, 55%, 0.2)', borderRadius: '12px', color: 'hsl(210, 20%, 95%)' }} />
               <Bar dataKey="value" fill="hsl(190, 95%, 55%)" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </motion.div>
       </div>
 
-      {/* Pulse Heatmap */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
