@@ -219,7 +219,7 @@ const Admin = () => {
     } else {
       const { error } = await supabase.from('posts').insert({
         ...postData,
-        user_id: '00000000-0000-0000-0000-000000000000',
+        user_id: (await supabase.auth.getUser()).data.user?.id || '',
         published: true,
       });
       if (error) { toast.error('Create failed: ' + error.message); return; }

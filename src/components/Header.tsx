@@ -18,6 +18,8 @@ const Header = () => {
     return () => window.removeEventListener('open-auth', handler);
   }, []);
 
+  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
+
   return (
     <>
       <motion.header
@@ -38,9 +40,9 @@ const Header = () => {
                     Admin
                   </Link>
                 )}
-                <span className="text-sm text-muted-foreground hidden sm:inline">{user?.name}</span>
+                <span className="text-sm text-muted-foreground hidden sm:inline">{displayName}</span>
                 <button
-                  onClick={logout}
+                  onClick={() => logout()}
                   className="glass rounded-lg px-3 py-1.5 text-sm glass-hover transition-all"
                 >
                   Log Out

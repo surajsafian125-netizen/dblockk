@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface AuthModalProps {
   mode: 'login' | 'signup' | null;
@@ -22,8 +23,21 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
     e.preventDefault();
     setLoading(true);
     try {
-      if (mode === 'login') await login(email, password);
-      else await signup(name, email, password);
+      if (mode === 'login') {
+        const result = await login(email, password);
+        if (result.error) {
+          toast.error(result.error);
+          return;
+        }
+        toast.success('Welcome back!');
+      } else {
+        const result = await signup(name, email, password);
+        if (result.error) {
+          toast.error(result.error);
+          return;
+        }
+        toast.success('Account created! Check your email to confirm.');
+      }
       onClose();
       setName('');
       setEmail('');
@@ -52,7 +66,7 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
         >
           <div className="flex justify-between items-center mb-6">
             <h2 className="font-display text-2xl font-bold">
-              {mode === 'login' ? 'Welcome Back' : 'Join PULSE'}
+              {mode === 'login' ? 'Welcome Back' : "Join D'Block"}
             </h2>
             <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
               <X className="h-5 w-5" />
@@ -79,9 +93,10 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
             />
             <input
               type="password"
-              placeholder="Password"
+              placeholder="Password (min 6 characters)"
               value={password}
               onChange={e => setPassword(e.target.value)}
+              minLength={6}
               className="w-full rounded-xl px-4 py-3 text-sm bg-secondary/50 border border-border focus:border-primary/50 focus:outline-none transition-colors placeholder:text-muted-foreground"
               required
             />
