@@ -10,6 +10,7 @@ import Footer from '@/components/Footer';
 import { streamChat, type Msg } from '@/lib/streamChat';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
+import { z } from 'zod';
 
 interface DBPost {
   id: string;
@@ -191,24 +192,54 @@ const Admin = () => {
     setFormTrending(false); setShowForm(false);
   };
 
+  const postSchema = z.object({
+    title: z.string().trim().min(1, 'Title is required').max(200, 'Title must be under 200 characters'),
+    content: z.string().trim().min(1, 'Content is required').max(50000, 'Content is too long'),
+    description: z.string().max(500, 'Description must be under 500 characters').optional(),
+    category: z.enum(['news', 'hustle', 'vibes'], { errorMap: () => ({ message: 'Invalid category' }) }),
+    tags: z.array(z.string().max(30, 'Tag too long')).max(10, 'Max 10 tags'),
+    image_url: z.union([z.string().url('Invalid image URL'), z.literal('')]).optional(),
+    video_url: z.union([z.string().url('Invalid video URL'), z.literal('')]).optional(),
+    views: z.number().int().min(0).max(999999999, 'Views too high'),
+    engagement_score: z.number().int().min(0).max(100, 'Engagement must be 0-100'),
+    is_trending: z.boolean(),
+  });
+
   const savePost = async () => {
-    if (!formTitle.trim() || !formContent.trim()) {
-      toast.error('Title and content are required');
+    const tags = formTags.split(',').map(t => t.trim()).filter(Boolean);
+    let validated;
+    try {
+      validated = postSchema.parse({
+        title: formTitle,
+        content: formContent,
+        description: formDescription || undefined,
+        category: formCategory,
+        tags,
+        image_url: formImageUrl || undefined,
+        video_url: formVideoUrl || undefined,
+        views: parseInt(formViews) || 0,
+        engagement_score: parseInt(formEngagement) || 0,
+        is_trending: formTrending,
+      });
+    } catch (e) {
+      if (e instanceof z.ZodError) {
+        toast.error(e.errors[0].message);
+      }
       return;
     }
-    const tags = formTags.split(',').map(t => t.trim()).filter(Boolean);
-    const readingTime = Math.max(1, Math.ceil(formContent.split(/\s+/).length / 200));
+
+    const readingTime = Math.max(1, Math.ceil(validated.content.split(/\s+/).length / 200));
     const postData = {
-      title: formTitle,
-      content: formContent,
-      description: formDescription || formContent.slice(0, 120),
-      category: formCategory,
-      tags,
-      image_url: formImageUrl || null,
-      video_url: formVideoUrl || null,
-      views: parseInt(formViews) || 0,
-      engagement_score: parseInt(formEngagement) || 0,
-      is_trending: formTrending,
+      title: validated.title,
+      content: validated.content,
+      description: validated.description || validated.content.slice(0, 120),
+      category: validated.category,
+      tags: validated.tags,
+      image_url: validated.image_url || null,
+      video_url: validated.video_url || null,
+      views: validated.views,
+      engagement_score: validated.engagement_score,
+      is_trending: validated.is_trending,
       reading_time: readingTime,
     };
 

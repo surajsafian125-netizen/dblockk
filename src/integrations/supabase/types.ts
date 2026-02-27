@@ -14,6 +14,21 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_config: {
+        Row: {
+          key: string
+          value: string
+        }
+        Insert: {
+          key: string
+          value: string
+        }
+        Update: {
+          key?: string
+          value?: string
+        }
+        Relationships: []
+      }
       analytics_settings: {
         Row: {
           engagement_change: string | null
