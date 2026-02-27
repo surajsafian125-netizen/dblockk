@@ -104,16 +104,39 @@ const Admin = () => {
     }
   };
 
+  const analyticsSchema = z.object({
+    total_views: z.string().max(20, 'Value too long'),
+    total_users: z.string().max(20, 'Value too long'),
+    engagement_rate: z.string().max(10, 'Value too long'),
+    growth: z.string().max(10, 'Value too long'),
+    views_change: z.string().max(10, 'Value too long'),
+    users_change: z.string().max(10, 'Value too long'),
+    engagement_change: z.string().max(10, 'Value too long'),
+    growth_change: z.string().max(10, 'Value too long'),
+  });
+
   const saveAnalytics = async () => {
+    let validated;
+    try {
+      validated = analyticsSchema.parse({
+        total_views: aTotalViews,
+        total_users: aTotalUsers,
+        engagement_rate: aEngagement,
+        growth: aGrowth,
+        views_change: aViewsChange,
+        users_change: aUsersChange,
+        engagement_change: aEngagementChange,
+        growth_change: aGrowthChange,
+      });
+    } catch (e) {
+      if (e instanceof z.ZodError) {
+        toast.error(e.errors[0].message);
+      }
+      return;
+    }
+
     const { error } = await supabase.from('analytics_settings').update({
-      total_views: aTotalViews,
-      total_users: aTotalUsers,
-      engagement_rate: aEngagement,
-      growth: aGrowth,
-      views_change: aViewsChange,
-      users_change: aUsersChange,
-      engagement_change: aEngagementChange,
-      growth_change: aGrowthChange,
+      ...validated,
       updated_at: new Date().toISOString(),
     }).eq('id', analyticsId);
 
@@ -253,7 +276,7 @@ const Admin = () => {
         user_id: (await supabase.auth.getUser()).data.user?.id || '',
         published: true,
       });
-      if (error) { toast.error('Create failed: ' + error.message); return; }
+      if (error) { toast.error('Failed to create post. Please try again.'); return; }
       toast.success('Post created!');
     }
     resetForm();
