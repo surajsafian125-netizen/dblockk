@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Users, Eye, Activity } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -14,11 +14,6 @@ const viewsData = [
   { name: 'Sun', views: 7500 },
 ];
 
-const categoryData = [
-  { name: 'News', value: 4500 },
-  { name: 'Hustle', value: 3800 },
-  { name: 'Vibes', value: 3200 },
-];
 
 const AnalyticsDashboard = () => {
   const [stats, setStats] = useState([
@@ -86,7 +81,7 @@ const AnalyticsDashboard = () => {
         ))}
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="max-w-3xl mx-auto">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           whileInView={{ opacity: 1, x: 0 }}
@@ -102,24 +97,6 @@ const AnalyticsDashboard = () => {
               <Tooltip contentStyle={{ background: 'hsl(220, 25%, 10%)', border: '1px solid hsl(190, 95%, 55%, 0.2)', borderRadius: '12px', color: 'hsl(210, 20%, 95%)' }} />
               <Line type="monotone" dataKey="views" stroke="hsl(190, 95%, 55%)" strokeWidth={2} dot={{ fill: 'hsl(190, 95%, 55%)', r: 4 }} />
             </LineChart>
-          </ResponsiveContainer>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          className="glass glow rounded-2xl p-6"
-        >
-          <h3 className="font-display font-semibold mb-4">Category Performance</h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={categoryData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 20%)" />
-              <XAxis dataKey="name" stroke="hsl(215, 15%, 55%)" fontSize={12} />
-              <YAxis stroke="hsl(215, 15%, 55%)" fontSize={12} />
-              <Tooltip contentStyle={{ background: 'hsl(220, 25%, 10%)', border: '1px solid hsl(190, 95%, 55%, 0.2)', borderRadius: '12px', color: 'hsl(210, 20%, 95%)' }} />
-              <Bar dataKey="value" fill="hsl(190, 95%, 55%)" radius={[8, 8, 0, 0]} />
-            </BarChart>
           </ResponsiveContainer>
         </motion.div>
       </div>
