@@ -11,6 +11,7 @@ import MatchDay from '@/components/MatchDay';
 import PodcastCreatorChart from '@/components/PodcastCreatorChart';
 import FloatingActionButton from '@/components/FloatingActionButton';
 import ParticleBackground from '@/components/ParticleBackground';
+import ContactSection from '@/components/ContactSection';
 import Footer from '@/components/Footer';
 
 const Index = () => {
@@ -57,6 +58,7 @@ const Index = () => {
             </section>
           </motion.div>
         )}
+        <ContactSection />
       </div>
       <Footer />
       <FloatingActionButton />

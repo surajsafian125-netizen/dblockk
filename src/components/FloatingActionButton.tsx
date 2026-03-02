@@ -12,7 +12,7 @@ const FloatingActionButton = () => {
   const actions = [
     ...(isAdmin ? [{ icon: Plus, label: 'Create Post', onClick: () => navigate('/admin') }] : []),
     { icon: Bot, label: 'Ask AI', onClick: () => {} },
-    { icon: Mail, label: 'Contact', onClick: () => {} },
+    { icon: Mail, label: 'Contact', onClick: () => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }) },
   ];
 
   return (
