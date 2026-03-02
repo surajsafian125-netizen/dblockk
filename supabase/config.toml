@@ -2,3 +2,6 @@ project_id = "cctxifxnvqbwjnhurbaf"
 
 [functions.chat]
 verify_jwt = false
+
+[functions.football-scores]
+verify_jwt = false
