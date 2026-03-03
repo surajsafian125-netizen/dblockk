@@ -311,7 +311,13 @@ const Admin = () => {
         onDone: () => setIsStreaming(false),
       });
     } catch (e: any) {
-      toast.error(e.message || 'AI request failed');
+      const errText = e.message || 'AI request failed';
+      toast.error(errText);
+      // Show the error inline in the chat so it's visible
+      setChatHistory(prev => [
+        ...prev,
+        { role: 'assistant', content: `⚠️ **Error:** ${errText}` },
+      ]);
       setIsStreaming(false);
     }
   };
