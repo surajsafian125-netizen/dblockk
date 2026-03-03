@@ -268,15 +268,17 @@ const Admin = () => {
 
     if (editingPost) {
       const { error } = await supabase.from('posts').update(postData).eq('id', editingPost.id);
-      if (error) { toast.error('Update failed'); return; }
+      if (error) { toast.error(`Update failed: ${error.code} — ${error.message}`); return; }
       toast.success('Post updated!');
     } else {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) { toast.error('Not authenticated. Please log in again.'); return; }
       const { error } = await supabase.from('posts').insert({
         ...postData,
-        user_id: (await supabase.auth.getUser()).data.user?.id || '',
+        user_id: userData.user.id,
         published: true,
       });
-      if (error) { toast.error('Failed to create post. Please try again.'); return; }
+      if (error) { toast.error(`Create failed: ${error.code} — ${error.message}`); return; }
       toast.success('Post created!');
     }
     resetForm();
