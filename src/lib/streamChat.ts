@@ -18,19 +18,37 @@ export async function streamChat({
     throw new Error("You must be logged in to use the AI chat.");
   }
 
-  const resp = await fetch(CHAT_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${session.access_token}`,
-    },
-    body: JSON.stringify({ messages }),
-  });
+  let resp: Response;
+  try {
+    resp = await fetch(CHAT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ messages }),
+    });
+  } catch (networkErr: any) {
+    throw new Error(`Network error: ${networkErr.message || "Could not reach edge function"}`);
+  }
 
-  if (!resp.ok || !resp.body) {
-    if (resp.status === 429) throw new Error("Rate limit exceeded. Please try again shortly.");
-    if (resp.status === 402) throw new Error("AI credits depleted. Please add funds.");
-    throw new Error("Failed to start stream");
+  if (!resp.ok) {
+    // Try to extract JSON error body
+    let errMsg = `HTTP ${resp.status}`;
+    try {
+      const body = await resp.json();
+      if (body.error) errMsg = body.error;
+    } catch {
+      try {
+        const text = await resp.text();
+        if (text) errMsg += `: ${text.slice(0, 200)}`;
+      } catch { /* ignore */ }
+    }
+    throw new Error(errMsg);
+  }
+
+  if (!resp.body) {
+    throw new Error("No response body from edge function");
   }
 
   const reader = resp.body.getReader();
