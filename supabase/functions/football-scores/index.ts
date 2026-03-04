@@ -6,6 +6,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const TOP_COMPETITIONS = [2001, 2002, 2014, 2019, 2021];
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -17,8 +19,6 @@ serve(async (req) => {
       throw new Error("FOOTBALL_API_KEY not configured");
     }
 
-    // Try today's matches across top competitions
-    // Competition IDs: PL=2021, CL=2001, BL1=2002, SA=2019, PD=2014
     const today = new Date().toISOString().split("T")[0];
     const url = `https://api.football-data.org/v4/matches?date=${today}`;
 
@@ -33,22 +33,61 @@ serve(async (req) => {
     }
 
     const data = await res.json();
-    const matches = (data.matches || [])
-      // Prioritise top-tier competitions
-      .filter((m: any) =>
-        [2001, 2002, 2014, 2019, 2021].includes(m.competition?.id)
-      )
-      .slice(0, 5)
-      .map((m: any) => ({
+    const allMatches = (data.matches || []).filter((m: any) =>
+      TOP_COMPETITIONS.includes(m.competition?.id)
+    );
+
+    // Build match list with events embedded
+    const matches = allMatches.slice(0, 6).map((m: any) => {
+      // Extract goals from score breakdown + bookings from the match object
+      const events: any[] = [];
+
+      // Goals from the goals array if available
+      if (m.goals && Array.isArray(m.goals)) {
+        m.goals.forEach((g: any) => {
+          events.push({
+            type: "GOAL",
+            minute: g.minute || "?",
+            team: g.team?.shortName || g.team?.name || "?",
+            player: g.scorer?.name || "Unknown",
+            detail: g.type === "OWN" ? "Own Goal" : g.type === "PENALTY" ? "Penalty" : null,
+          });
+        });
+      }
+
+      // Bookings if available
+      if (m.bookings && Array.isArray(m.bookings)) {
+        m.bookings.forEach((b: any) => {
+          events.push({
+            type: b.card === "RED" ? "RED_CARD" : "YELLOW_CARD",
+            minute: b.minute || "?",
+            team: b.team?.shortName || b.team?.name || "?",
+            player: b.player?.name || "Unknown",
+            detail: null,
+          });
+        });
+      }
+
+      // Sort events by minute
+      events.sort((a: any, b: any) => {
+        const am = parseInt(a.minute) || 0;
+        const bm = parseInt(b.minute) || 0;
+        return am - bm;
+      });
+
+      return {
+        id: m.id,
         home: m.homeTeam?.shortName || m.homeTeam?.name || "TBD",
         away: m.awayTeam?.shortName || m.awayTeam?.name || "TBD",
         homeScore: m.score?.fullTime?.home ?? m.score?.halfTime?.home ?? 0,
         awayScore: m.score?.fullTime?.away ?? m.score?.halfTime?.away ?? 0,
-        status: m.status, // SCHEDULED, LIVE, IN_PLAY, PAUSED, FINISHED, etc.
+        status: m.status,
         minute: m.minute || null,
         utcDate: m.utcDate,
         competition: m.competition?.name || "Football",
-      }));
+        events,
+      };
+    });
 
     return new Response(JSON.stringify({ matches }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -58,7 +97,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ matches: [], error: err.message }),
       {
-        status: 200, // Return 200 so frontend can gracefully fallback
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
