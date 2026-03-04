@@ -54,6 +54,7 @@ const Admin = () => {
   const [formEngagement, setFormEngagement] = useState('0');
   const [formTrending, setFormTrending] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [postSubmitError, setPostSubmitError] = useState<string | null>(null);
 
   // Analytics control state
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -193,6 +194,7 @@ const Admin = () => {
   };
 
   const openEditForm = (post: DBPost) => {
+    setPostSubmitError(null);
     setEditingPost(post);
     setFormTitle(post.title);
     setFormContent(post.content);
@@ -208,6 +210,7 @@ const Admin = () => {
   };
 
   const resetForm = () => {
+    setPostSubmitError(null);
     setEditingPost(null);
     setFormTitle(''); setFormContent(''); setFormDescription('');
     setFormCategory('news'); setFormTags(''); setFormImageUrl('');
@@ -228,7 +231,14 @@ const Admin = () => {
     is_trending: z.boolean(),
   });
 
+  const formatSupabaseError = (error: { code?: string; message?: string; details?: string; hint?: string }) => {
+    return [error.code, error.message, error.details, error.hint]
+      .filter(Boolean)
+      .join(' — ');
+  };
+
   const savePost = async () => {
+    setPostSubmitError(null);
     const tags = formTags.split(',').map(t => t.trim()).filter(Boolean);
     let validated;
     try {
@@ -246,7 +256,9 @@ const Admin = () => {
       });
     } catch (e) {
       if (e instanceof z.ZodError) {
-        toast.error(e.errors[0].message);
+        const validationMessage = e.errors[0].message;
+        setPostSubmitError(validationMessage);
+        toast.error(validationMessage);
       }
       return;
     }
@@ -268,19 +280,39 @@ const Admin = () => {
 
     if (editingPost) {
       const { error } = await supabase.from('posts').update(postData).eq('id', editingPost.id);
-      if (error) { toast.error(`Update failed: ${error.code} — ${error.message}`); return; }
+      if (error) {
+        const fullError = formatSupabaseError(error) || 'Update failed';
+        console.error('[Create/Edit Post] Update error:', error);
+        setPostSubmitError(fullError);
+        toast.error(fullError);
+        return;
+      }
       toast.success('Post updated!');
     } else {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) { toast.error('Not authenticated. Please log in again.'); return; }
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) {
+        const authErr = userError?.message || 'Not authenticated. Please log in again.';
+        setPostSubmitError(authErr);
+        toast.error(authErr);
+        return;
+      }
+
       const { error } = await supabase.from('posts').insert({
         ...postData,
         user_id: userData.user.id,
         published: true,
       });
-      if (error) { toast.error(`Create failed: ${error.code} — ${error.message}`); return; }
+
+      if (error) {
+        const fullError = formatSupabaseError(error) || 'Create failed';
+        console.error('[Create/Edit Post] Insert error:', error);
+        setPostSubmitError(fullError);
+        toast.error(fullError);
+        return;
+      }
       toast.success('Post created!');
     }
+
     resetForm();
     fetchPosts();
   };
@@ -429,6 +461,11 @@ const Admin = () => {
               </div>
               {formImageUrl && (
                 <img src={formImageUrl} alt="Preview" className="h-32 w-auto rounded-xl object-cover" />
+              )}
+              {postSubmitError && (
+                <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  {postSubmitError}
+                </div>
               )}
               <button onClick={savePost} className="bg-primary text-primary-foreground rounded-xl px-6 py-2.5 text-sm font-medium hover:opacity-90 transition-all glow flex items-center gap-2">
                 <Save className="h-4 w-4" /> {editingPost ? 'Update Post' : 'Publish Post'}
