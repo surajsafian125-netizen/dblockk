@@ -34,22 +34,22 @@ serve(async (req) => {
     }
 
     const { messages } = await req.json();
-    const GEMINI_API_KEY = Deno.env.get("VITE_GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      return new Response(JSON.stringify({ error: "VITE_GEMINI_API_KEY is not configured in Supabase secrets" }), {
+    const DEEPSEEK_API_KEY = Deno.env.get("VITE_DEEPSEEK_API_KEY");
+    if (!DEEPSEEK_API_KEY) {
+      return new Response(JSON.stringify({ error: "VITE_DEEPSEEK_API_KEY is not configured in Supabase secrets" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+    const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${GEMINI_API_KEY}`,
+        Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gemini-2.0-flash",
+        model: "deepseek-chat",
         messages: [
           {
             role: "system",
@@ -63,20 +63,20 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errBody = await response.text();
-      console.error("Gemini API error:", response.status, errBody);
+      console.error("DeepSeek API error:", response.status, errBody);
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Gemini rate limit exceeded. Try again shortly." }), {
+        return new Response(JSON.stringify({ error: "DeepSeek rate limit exceeded. Try again shortly." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 401 || response.status === 403) {
-        return new Response(JSON.stringify({ error: `Gemini API key invalid or expired (${response.status})` }), {
+        return new Response(JSON.stringify({ error: `DeepSeek API key invalid or expired (${response.status})` }), {
           status: 502,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      return new Response(JSON.stringify({ error: `Gemini API error ${response.status}: ${errBody.slice(0, 200)}` }), {
+      return new Response(JSON.stringify({ error: `DeepSeek API error ${response.status}: ${errBody.slice(0, 200)}` }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
