@@ -31,9 +31,9 @@ interface Highlight {
   id: string;
   title: string;
   thumbnail: string;
-  duration: string;
-  competition: string;
-  date: string;
+  channelTitle: string;
+  publishedAt: string;
+  videoUrl: string;
 }
 
 /* ── Fallback data ─────────────────────────────────────── */
@@ -57,12 +57,8 @@ const FALLBACK_FIXTURES: Fixture[] = [
 ];
 
 const MOCK_HIGHLIGHTS: Highlight[] = [
-  { id: '1', title: 'Real Madrid vs Man City | UCL QF Highlights', thumbnail: 'https://images.unsplash.com/photo-1489944440615-453fc2b6a9a9?w=400&h=225&fit=crop', duration: '12:34', competition: 'Champions League', date: '2 hours ago' },
-  { id: '2', title: 'Barcelona 3-2 Inter Milan | All Goals', thumbnail: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400&h=225&fit=crop', duration: '10:15', competition: 'Champions League', date: '5 hours ago' },
-  { id: '3', title: 'Arsenal vs Liverpool | Premier League', thumbnail: 'https://images.unsplash.com/photo-1508098682722-e99c643e7f0b?w=400&h=225&fit=crop', duration: '14:22', competition: 'Premier League', date: '1 day ago' },
-  { id: '4', title: 'Bayern Munich 4-1 Dortmund | Der Klassiker', thumbnail: 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=400&h=225&fit=crop', duration: '11:08', competition: 'Bundesliga', date: '2 days ago' },
-  { id: '5', title: 'Juventus vs AC Milan | Serie A Highlights', thumbnail: 'https://images.unsplash.com/photo-1553778263-73a83bab9b0c?w=400&h=225&fit=crop', duration: '9:47', competition: 'Serie A', date: '2 days ago' },
-  { id: '6', title: 'PSG vs Marseille | Le Classique Goals', thumbnail: 'https://images.unsplash.com/photo-1459865264687-595d652de67e?w=400&h=225&fit=crop', duration: '8:56', competition: 'Ligue 1', date: '3 days ago' },
+  { id: '1', title: 'Real Madrid vs Man City | UCL QF Highlights', thumbnail: 'https://images.unsplash.com/photo-1489944440615-453fc2b6a9a9?w=400&h=225&fit=crop', channelTitle: 'UEFA', publishedAt: new Date().toISOString(), videoUrl: '#' },
+  { id: '2', title: 'Barcelona 3-2 Inter Milan | All Goals', thumbnail: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400&h=225&fit=crop', channelTitle: 'UEFA', publishedAt: new Date().toISOString(), videoUrl: '#' },
 ];
 
 /* ── Helpers ────────────────────────────────────────────── */
@@ -96,6 +92,17 @@ const eventIcon = (type: string) => {
 
 const isLiveStatus = (status: string) => ['IN_PLAY', 'LIVE', 'PAUSED'].includes(status);
 
+const timeAgo = (dateStr: string) => {
+  try {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
+  } catch { return ''; }
+};
 /* ── Component ─────────────────────────────────────────── */
 
 const MatchDay = () => {
@@ -104,6 +111,9 @@ const MatchDay = () => {
   const [isLive, setIsLive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [expandedMatch, setExpandedMatch] = useState<number | null>(null);
+  const [highlights, setHighlights] = useState<Highlight[]>(MOCK_HIGHLIGHTS);
+  const [highlightsLoading, setHighlightsLoading] = useState(false);
+  const [highlightsFetched, setHighlightsFetched] = useState(false);
 
   const hasLiveMatch = fixtures.some(f => isLiveStatus(f.status));
 
@@ -125,6 +135,25 @@ const MatchDay = () => {
     };
     fetchScores();
   }, []);
+
+  useEffect(() => {
+    if (activeTab !== 'highlights' || highlightsFetched) return;
+    const fetchHighlights = async () => {
+      setHighlightsLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('youtube-highlights');
+        if (error) throw error;
+        const items: Highlight[] = data?.highlights ?? [];
+        if (items.length > 0) setHighlights(items);
+      } catch (err) {
+        console.error('Failed to fetch highlights:', err);
+      } finally {
+        setHighlightsLoading(false);
+        setHighlightsFetched(true);
+      }
+    };
+    fetchHighlights();
+  }, [activeTab, highlightsFetched]);
 
   const tabs = [
     { key: 'play-by-play' as const, label: 'Live Play-by-Play', icon: Zap },
@@ -264,10 +293,18 @@ const MatchDay = () => {
             exit={{ opacity: 0, x: -10 }}
             transition={{ duration: 0.2 }}
           >
+            {highlightsLoading ? (
+              <div className="flex items-center justify-center h-[200px] text-muted-foreground text-sm animate-pulse">
+                Loading highlights…
+              </div>
+            ) : (
             <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
-              {MOCK_HIGHLIGHTS.map((h, i) => (
-                <motion.div
+              {highlights.map((h, i) => (
+                <motion.a
                   key={h.id}
+                  href={h.videoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.06 }}
@@ -284,10 +321,6 @@ const MatchDay = () => {
                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <Play className="h-5 w-5 text-white fill-white" />
                     </div>
-                    {/* Duration badge */}
-                    <span className="absolute bottom-1 right-1 bg-black/70 text-white text-[9px] px-1.5 py-0.5 rounded font-mono">
-                      {h.duration}
-                    </span>
                   </div>
 
                   {/* Info */}
@@ -296,15 +329,16 @@ const MatchDay = () => {
                       {h.title}
                     </p>
                     <div className="flex items-center gap-2 mt-1.5">
-                      <span className="text-[10px] text-primary/70">{h.competition}</span>
+                      <span className="text-[10px] text-primary/70">{h.channelTitle}</span>
                       <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-2.5 w-2.5" /> {h.date}
+                        <Clock className="h-2.5 w-2.5" /> {timeAgo(h.publishedAt)}
                       </span>
                     </div>
                   </div>
-                </motion.div>
+                </motion.a>
               ))}
             </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
