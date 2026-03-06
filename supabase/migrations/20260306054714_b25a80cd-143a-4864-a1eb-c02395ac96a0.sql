@@ -1,0 +1,1 @@
+ALTER TABLE public.posts DROP CONSTRAINT IF EXISTS posts_category_check;
