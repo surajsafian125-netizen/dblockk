@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Trash2, Edit, Eye, EyeOff, Send, Bot, Plus, Save, X, Upload, BarChart3 } from 'lucide-react';
+import { Trash2, Edit, Eye, EyeOff, Send, Bot, Plus, Save, X, Upload, BarChart3, Newspaper, Loader2 } from 'lucide-react';
 import Header from '@/components/Header';
 import ParticleBackground from '@/components/ParticleBackground';
 import Footer from '@/components/Footer';
@@ -55,6 +55,7 @@ const Admin = () => {
   const [formTrending, setFormTrending] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [postSubmitError, setPostSubmitError] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
 
   // Analytics control state
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -222,7 +223,7 @@ const Admin = () => {
     title: z.string().trim().min(1, 'Title is required').max(200, 'Title must be under 200 characters'),
     content: z.string().trim().min(1, 'Content is required').max(50000, 'Content is too long'),
     description: z.string().max(500, 'Description must be under 500 characters').optional(),
-    category: z.enum(['news', 'hustle', 'vibes'], { errorMap: () => ({ message: 'Invalid category' }) }),
+    category: z.string().trim().min(1, 'Category is required').max(50, 'Category too long'),
     tags: z.array(z.string().max(30, 'Tag too long')).max(10, 'Max 10 tags'),
     image_url: z.union([z.string().url('Invalid image URL'), z.literal('')]).optional(),
     video_url: z.union([z.string().url('Invalid video URL'), z.literal('')]).optional(),
@@ -317,6 +318,82 @@ const Admin = () => {
     fetchPosts();
   };
 
+  const RSS_FEEDS = [
+    'https://feeds.bbci.co.uk/news/technology/rss.xml',
+    'https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml',
+    'https://feeds.feedburner.com/TechCrunch/',
+  ];
+
+  const importNews = async () => {
+    setImporting(true);
+    try {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) {
+        toast.error('Not authenticated');
+        setImporting(false);
+        return;
+      }
+
+      const allArticles: Array<{ title: string; description: string; image: string; link: string }> = [];
+
+      const results = await Promise.allSettled(
+        RSS_FEEDS.map(async (feedUrl) => {
+          const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`);
+          if (!res.ok) return [];
+          const json = await res.json();
+          return (json.items || []).slice(0, 5);
+        })
+      );
+
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          for (const item of result.value) {
+            allArticles.push({
+              title: item.title || 'Untitled',
+              description: item.description?.replace(/<[^>]*>/g, '').slice(0, 300) || '',
+              image: item.enclosure?.link || item.thumbnail || '',
+              link: item.link || '',
+            });
+          }
+        }
+      }
+
+      if (allArticles.length === 0) {
+        toast.error('No articles fetched from RSS feeds');
+        setImporting(false);
+        return;
+      }
+
+      const rows = allArticles.map((a) => ({
+        title: a.title,
+        content: a.description || a.title,
+        description: a.description.slice(0, 120) || null,
+        category: 'News',
+        image_url: a.image || null,
+        tags: ['imported', 'global-news'],
+        user_id: userData.user.id,
+        published: true,
+        views: 0,
+        likes_count: 0,
+        engagement_score: 0,
+        reading_time: 2,
+        is_trending: false,
+      }));
+
+      const { error } = await supabase.from('posts').insert(rows);
+      if (error) {
+        toast.error(formatSupabaseError(error));
+        console.error('[Import News] Insert error:', error);
+      } else {
+        toast.success(`Imported ${rows.length} articles!`);
+        fetchPosts();
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Import failed');
+    }
+    setImporting(false);
+  };
+
   const sendChat = async () => {
     if (!chatMessage.trim() || isStreaming) return;
     const userMsg: Msg = { role: 'user', content: chatMessage };
@@ -371,6 +448,10 @@ const Admin = () => {
         <div className="flex gap-3 mb-6 flex-wrap">
           <button onClick={() => { resetForm(); setShowForm(true); }} className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm font-medium hover:opacity-90 transition-all glow flex items-center gap-2">
             <Plus className="h-4 w-4" /> Create Post
+          </button>
+          <button onClick={importNews} disabled={importing} className="bg-accent text-accent-foreground rounded-xl px-4 py-2 text-sm font-medium hover:opacity-90 transition-all flex items-center gap-2 disabled:opacity-50">
+            {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Newspaper className="h-4 w-4" />}
+            {importing ? 'Importing...' : 'Import Global News'}
           </button>
           <button onClick={() => setShowAnalytics(!showAnalytics)} className="glass rounded-xl px-4 py-2 text-sm font-medium glass-hover transition-all flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-primary" /> Analytics Control
@@ -435,11 +516,12 @@ const Admin = () => {
               <input value={formDescription} onChange={e => setFormDescription(e.target.value)} placeholder="Short description..." className="w-full bg-secondary/30 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground" />
               <textarea value={formContent} onChange={e => setFormContent(e.target.value)} placeholder="Full content..." rows={6} className="w-full bg-secondary/30 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground resize-none" />
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <select value={formCategory} onChange={e => setFormCategory(e.target.value)} className="bg-secondary/30 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50">
-                  <option value="news">News</option>
-                  <option value="hustle">Hustle</option>
-                  <option value="vibes">Vibes</option>
-                </select>
+                <input value={formCategory} onChange={e => setFormCategory(e.target.value)} placeholder="Category (e.g. News, Hustle, Vibes)" list="category-suggestions" className="bg-secondary/30 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground" />
+                <datalist id="category-suggestions">
+                  <option value="News" />
+                  <option value="Hustle" />
+                  <option value="Vibes" />
+                </datalist>
                 <input value={formTags} onChange={e => setFormTags(e.target.value)} placeholder="Tags (comma sep)" className="bg-secondary/30 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground" />
                 <input value={formViews} onChange={e => setFormViews(e.target.value)} placeholder="Views" type="number" className="bg-secondary/30 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50" />
                 <input value={formEngagement} onChange={e => setFormEngagement(e.target.value)} placeholder="Engagement %" type="number" className="bg-secondary/30 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50" />
