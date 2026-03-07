@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Trash2, Edit, Eye, EyeOff, Send, Bot, Plus, Save, X, Upload, BarChart3, Newspaper, Loader2 } from 'lucide-react';
+import { Trash2, Edit, Eye, EyeOff, Send, Bot, Plus, Save, X, Upload, BarChart3, Newspaper, Loader2, Megaphone } from 'lucide-react';
 import Header from '@/components/Header';
 import ParticleBackground from '@/components/ParticleBackground';
 import Footer from '@/components/Footer';
@@ -56,6 +56,8 @@ const Admin = () => {
   const [uploading, setUploading] = useState(false);
   const [postSubmitError, setPostSubmitError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+  const [broadcastMsg, setBroadcastMsg] = useState('');
+  const [broadcasting, setBroadcasting] = useState(false);
 
   // Analytics control state
   const [showAnalytics, setShowAnalytics] = useState(false);
