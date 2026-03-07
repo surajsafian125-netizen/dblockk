@@ -3,7 +3,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import ContentGrid from '@/components/ContentGrid';
-import AnalyticsDashboard from '@/components/AnalyticsDashboard';
 import GlobalTrends from '@/components/GlobalTrends';
 import DailyTechLaunches from '@/components/DailyTechLaunches';
 import TechCategoryGrowth from '@/components/TechCategoryGrowth';
@@ -30,7 +29,6 @@ const Index = () => {
             transition={{ delay: 0.3 }}
           >
             <ContentGrid />
-            <AnalyticsDashboard />
 
             {/* Intelligence & Culture Hub */}
             <section className="container mx-auto px-4 py-16">
