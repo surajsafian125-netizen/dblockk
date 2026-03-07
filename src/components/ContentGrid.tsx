@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import ContentCard from './ContentCard';
+import PostDetailModal from './PostDetailModal';
 import { supabase } from '@/integrations/supabase/client';
 
 interface DBPost {
@@ -25,6 +26,7 @@ export interface PostDisplay {
   id: string;
   title: string;
   description: string;
+  content: string;
   image: string;
   category: string;
   tags: string[];
@@ -47,6 +49,7 @@ const ContentGrid = () => {
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [posts, setPosts] = useState<PostDisplay[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedPost, setSelectedPost] = useState<PostDisplay | null>(null);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -65,6 +68,7 @@ const ContentGrid = () => {
         id: p.id,
         title: p.title,
         description: p.description || p.content.slice(0, 120) + '...',
+        content: p.content,
         image: p.image_url || 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop',
         category: p.category,
         tags: p.tags || [],
@@ -166,7 +170,7 @@ const ContentGrid = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((post, i) => (
-            <ContentCard key={post.id} post={post} index={i} />
+            <ContentCard key={post.id} post={post} index={i} onClick={() => setSelectedPost(post)} />
           ))}
         </div>
       )}
@@ -176,6 +180,8 @@ const ContentGrid = () => {
           No posts found. Create some in the admin dashboard!
         </div>
       )}
+
+      <PostDetailModal post={selectedPost} onClose={() => setSelectedPost(null)} />
     </section>
   );
 };
