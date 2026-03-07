@@ -520,7 +520,30 @@ const Admin = () => {
           </motion.div>
         )}
 
-        {/* Create/Edit Post Form */}
+        {/* Send Broadcast */}
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass glow rounded-2xl p-6 mb-6">
+          <h2 className="font-display text-lg font-semibold mb-4 flex items-center gap-2">
+            <Megaphone className="h-5 w-5 text-primary" /> Send Broadcast
+          </h2>
+          <div className="flex gap-2">
+            <input
+              value={broadcastMsg}
+              onChange={e => setBroadcastMsg(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && sendBroadcast()}
+              placeholder="Type a notification message for all users..."
+              className="flex-1 bg-secondary/30 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground"
+            />
+            <button
+              onClick={sendBroadcast}
+              disabled={broadcasting || !broadcastMsg.trim()}
+              className="bg-primary text-primary-foreground rounded-xl px-5 py-2.5 text-sm font-medium hover:opacity-90 transition-all glow flex items-center gap-2 disabled:opacity-40"
+            >
+              {broadcasting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Send
+            </button>
+          </div>
+        </motion.div>
+
         {showForm && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass glow rounded-2xl p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
