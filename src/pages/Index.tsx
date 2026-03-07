@@ -8,6 +8,7 @@ import DailyTechLaunches from '@/components/DailyTechLaunches';
 import TechCategoryGrowth from '@/components/TechCategoryGrowth';
 import MatchDay from '@/components/MatchDay';
 import PodcastCreatorChart from '@/components/PodcastCreatorChart';
+import LocalPulse from '@/components/LocalPulse';
 import FloatingActionButton from '@/components/FloatingActionButton';
 import ParticleBackground from '@/components/ParticleBackground';
 import ContactSection from '@/components/ContactSection';
@@ -52,6 +53,11 @@ const Index = () => {
               <div className="grid md:grid-cols-2 gap-6">
                 <MatchDay />
                 <PodcastCreatorChart />
+              </div>
+
+              {/* Local News */}
+              <div className="grid gap-6 mt-6">
+                <LocalPulse />
               </div>
             </section>
           </motion.div>
