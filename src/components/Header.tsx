@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import ThemeToggle from './ThemeToggle';
 import AuthModal from './AuthModal';
+import NotificationBell from './NotificationBell';
 
 const Header = () => {
   const { isAuthenticated, user, logout, isAdmin } = useAuth();
@@ -35,6 +36,7 @@ const Header = () => {
             <ThemeToggle />
             {isAuthenticated ? (
               <>
+                <NotificationBell />
                 {isAdmin && (
                   <Link to="/admin" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                     Admin
