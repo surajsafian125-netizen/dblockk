@@ -396,6 +396,20 @@ const Admin = () => {
     setImporting(false);
   };
 
+  const sendBroadcast = async () => {
+    if (!broadcastMsg.trim()) return;
+    setBroadcasting(true);
+    const { error } = await supabase.from('notifications').insert({ message: broadcastMsg.trim() });
+    if (error) {
+      toast.error('Failed to send broadcast');
+      console.error('[Broadcast] Insert error:', error);
+    } else {
+      toast.success('Broadcast sent!');
+      setBroadcastMsg('');
+    }
+    setBroadcasting(false);
+  };
+
   const sendChat = async () => {
     if (!chatMessage.trim() || isStreaming) return;
     const userMsg: Msg = { role: 'user', content: chatMessage };
