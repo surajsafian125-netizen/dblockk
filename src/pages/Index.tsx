@@ -9,6 +9,7 @@ import TechCategoryGrowth from '@/components/TechCategoryGrowth';
 import MatchDay from '@/components/MatchDay';
 import PodcastCreatorChart from '@/components/PodcastCreatorChart';
 import GeoIntelligenceHub from '@/components/GeoIntelligenceHub';
+import CultureEntertainmentFeed from '@/components/CultureEntertainmentFeed';
 import FloatingActionButton from '@/components/FloatingActionButton';
 import ParticleBackground from '@/components/ParticleBackground';
 import ContactSection from '@/components/ContactSection';
