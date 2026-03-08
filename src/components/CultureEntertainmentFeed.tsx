@@ -4,6 +4,8 @@ import {
   Heart, MessageCircle, Eye, Clock, ExternalLink, X, RefreshCw,
   Sparkles, Share2, Bookmark,
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 /* ── Types ────────────────────────────────────────────── */
 interface FeedItem {
@@ -20,7 +22,6 @@ interface FeedItem {
 const ADMIN_NAME = "D'Block Admin";
 const ADMIN_AVATAR = 'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=dblock&backgroundColor=0891b2';
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&h=450&fit=crop';
-const FEED_URL = 'https://api.rss2json.com/v1/api.json?rss_url=https://news.google.com/rss/search?q=entertainment+culture+trending';
 
 const timeAgo = (date: string) => {
   const diff = Date.now() - new Date(date).getTime();
@@ -38,13 +39,6 @@ const stripHtml = (html: string) => {
   return tmp.textContent || tmp.innerText || '';
 };
 
-const fakeStat = (seed: number) => ({
-  views: Math.floor(800 + ((seed * 1337) % 4200)),
-  likes: Math.floor(12 + ((seed * 997) % 280)),
-  comments: Math.floor(2 + ((seed * 431) % 45)),
-  readTime: Math.floor(2 + ((seed * 53) % 7)),
-});
-
 /* ── Detail Modal ─────────────────────────────────────── */
 const CultureDetailModal = ({
   item,
@@ -53,12 +47,8 @@ const CultureDetailModal = ({
   item: FeedItem | null;
   onClose: () => void;
 }) => {
-  const [liked, setLiked] = useState(false);
-  const [saved, setSaved] = useState(false);
-
   if (!item) return null;
 
-  const stats = fakeStat(item.title.length);
   const bodyText = stripHtml(item.content || item.description || '');
 
   return (
@@ -71,10 +61,7 @@ const CultureDetailModal = ({
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={onClose}
         >
-          {/* Backdrop */}
           <div className="absolute inset-0 bg-background/80 backdrop-blur-md" />
-
-          {/* Modal */}
           <motion.div
             initial={{ opacity: 0, scale: 0.92, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -83,7 +70,6 @@ const CultureDetailModal = ({
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border border-primary/10 bg-card/60 backdrop-blur-xl shadow-[0_0_60px_-10px_hsl(var(--primary)/0.15)]"
           >
-            {/* Close button */}
             <button
               onClick={onClose}
               className="absolute top-4 right-4 z-10 rounded-full p-2 glass glass-hover text-muted-foreground hover:text-foreground transition-colors"
@@ -91,7 +77,6 @@ const CultureDetailModal = ({
               <X className="h-4 w-4" />
             </button>
 
-            {/* Cover image */}
             <div className="relative h-56 sm:h-72 overflow-hidden rounded-t-2xl">
               <img
                 src={item.thumbnail || FALLBACK_IMG}
@@ -105,15 +90,9 @@ const CultureDetailModal = ({
               />
             </div>
 
-            {/* Content */}
             <div className="p-6 -mt-12 relative">
-              {/* Admin author header */}
               <div className="flex items-center gap-3 mb-4">
-                <img
-                  src={ADMIN_AVATAR}
-                  alt={ADMIN_NAME}
-                  className="h-10 w-10 rounded-full border-2 border-primary/30 bg-muted"
-                />
+                <img src={ADMIN_AVATAR} alt={ADMIN_NAME} className="h-10 w-10 rounded-full border-2 border-primary/30 bg-muted" />
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-display text-sm font-semibold">{ADMIN_NAME}</span>
@@ -123,56 +102,17 @@ const CultureDetailModal = ({
                 </div>
               </div>
 
-              {/* Category tag */}
               <div className="flex flex-wrap gap-1.5 mb-3">
                 <span className="text-xs bg-accent/10 text-accent rounded-full px-2 py-0.5">#culture</span>
                 <span className="text-xs bg-primary/5 text-primary/70 rounded-full px-2 py-0.5">#entertainment</span>
-                <span className="text-xs bg-primary/5 text-primary/70 rounded-full px-2 py-0.5">#trending</span>
               </div>
 
               <h2 className="font-display text-2xl font-bold mb-4 leading-tight">{item.title}</h2>
 
-              {/* Stats row */}
-              <div className="flex items-center gap-4 text-xs text-muted-foreground mb-5">
-                <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {stats.views.toLocaleString()} views</span>
-                <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {stats.readTime}m read</span>
-              </div>
-
-              {/* Body text */}
               <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap mb-6">
-                {bodyText || 'No additional content available for this article. Click the source link below to read the full story.'}
+                {bodyText || 'No additional content available. Click the source link below to read the full story.'}
               </div>
 
-              {/* Action bar */}
-              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-border/40">
-                <motion.button
-                  whileTap={{ scale: 1.15 }}
-                  onClick={() => setLiked(!liked)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                    liked ? 'bg-primary/15 text-primary' : 'glass glass-hover text-muted-foreground'
-                  }`}
-                >
-                  <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} />
-                  {liked ? stats.likes + 1 : stats.likes}
-                </motion.button>
-                <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm glass glass-hover text-muted-foreground">
-                  <MessageCircle className="h-4 w-4" /> {stats.comments}
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm glass glass-hover text-muted-foreground">
-                  <Share2 className="h-4 w-4" />
-                </button>
-                <motion.button
-                  whileTap={{ scale: 1.15 }}
-                  onClick={() => setSaved(!saved)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ml-auto ${
-                    saved ? 'bg-accent/15 text-accent' : 'glass glass-hover text-muted-foreground'
-                  }`}
-                >
-                  <Bookmark className={`h-4 w-4 ${saved ? 'fill-current' : ''}`} />
-                </motion.button>
-              </div>
-
-              {/* Source link */}
               <a
                 href={item.link}
                 target="_blank"
@@ -184,9 +124,7 @@ const CultureDetailModal = ({
               </a>
 
               {item.source && (
-                <p className="text-center text-[11px] text-muted-foreground mt-2">
-                  via {item.source}
-                </p>
+                <p className="text-center text-[11px] text-muted-foreground mt-2">via {item.source}</p>
               )}
             </div>
           </motion.div>
@@ -206,14 +144,6 @@ const CultureCard = ({
   index: number;
   onClick: () => void;
 }) => {
-  const [liked, setLiked] = useState(false);
-  const stats = fakeStat(item.title.length);
-
-  const handleLike = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setLiked(!liked);
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -224,7 +154,6 @@ const CultureCard = ({
       onClick={onClick}
       className="glass glass-hover rounded-2xl overflow-hidden group cursor-pointer transition-all"
     >
-      {/* Image */}
       <div className="relative h-48 overflow-hidden">
         <img
           src={item.thumbnail || FALLBACK_IMG}
@@ -239,15 +168,9 @@ const CultureCard = ({
         </div>
       </div>
 
-      {/* Body */}
       <div className="p-5">
-        {/* Author row */}
         <div className="flex items-center gap-2 mb-3">
-          <img
-            src={ADMIN_AVATAR}
-            alt={ADMIN_NAME}
-            className="h-6 w-6 rounded-full border border-primary/20 bg-muted"
-          />
+          <img src={ADMIN_AVATAR} alt={ADMIN_NAME} className="h-6 w-6 rounded-full border border-primary/20 bg-muted" />
           <span className="text-xs font-medium">{ADMIN_NAME}</span>
           <span className="text-[10px] bg-primary/15 text-primary rounded-full px-1.5 py-0.5 font-medium">Admin</span>
           <span className="text-[10px] text-muted-foreground ml-auto">{timeAgo(item.pubDate)}</span>
@@ -259,29 +182,9 @@ const CultureCard = ({
         </p>
         <span className="text-xs text-primary font-medium mb-3 inline-block">Read more →</span>
 
-        {/* Tags */}
         <div className="flex flex-wrap gap-1.5 mb-3">
           <span className="text-xs text-primary/70 bg-primary/5 rounded-full px-2 py-0.5">#culture</span>
           <span className="text-xs text-primary/70 bg-primary/5 rounded-full px-2 py-0.5">#trending</span>
-        </div>
-
-        {/* Stats row */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {stats.views.toLocaleString()}</span>
-            <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {stats.readTime}m</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1"><MessageCircle className="h-3 w-3" /> {stats.comments}</span>
-            <motion.button
-              whileTap={{ scale: 1.3 }}
-              onClick={handleLike}
-              className={`flex items-center gap-1 transition-colors ${liked ? 'text-destructive' : ''}`}
-            >
-              <Heart className={`h-3.5 w-3.5 ${liked ? 'fill-current' : ''}`} />
-              {liked ? stats.likes + 1 : stats.likes}
-            </motion.button>
-          </div>
         </div>
       </div>
     </motion.div>
@@ -290,16 +193,33 @@ const CultureCard = ({
 
 /* ── Main Feed Component ──────────────────────────────── */
 const CultureEntertainmentFeed = () => {
+  const { user } = useAuth();
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [selectedItem, setSelectedItem] = useState<FeedItem | null>(null);
+  const [feedEnabled, setFeedEnabled] = useState(false);
+  const [feedUrl, setFeedUrl] = useState('');
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
 
-  const fetchFeed = async () => {
+  // Fetch admin feed settings
+  useEffect(() => {
+    const loadSettings = async () => {
+      const { data: enabledRow } = await supabase.from('admin_config').select('value').eq('key', 'feed_enabled').single();
+      const { data: urlRow } = await supabase.from('admin_config').select('value').eq('key', 'feed_rss_url').single();
+      if (enabledRow) setFeedEnabled(enabledRow.value === 'true');
+      if (urlRow && urlRow.value) setFeedUrl(urlRow.value);
+      setSettingsLoaded(true);
+    };
+    loadSettings();
+  }, []);
+
+  const fetchFeed = async (url: string) => {
     setLoading(true);
     setError(false);
     try {
-      const res = await fetch(FEED_URL);
+      const rssJsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`;
+      const res = await fetch(rssJsonUrl);
       const json = await res.json();
       if (json.status === 'ok' && json.items?.length) {
         setItems(
@@ -322,12 +242,26 @@ const CultureEntertainmentFeed = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchFeed(); }, []);
+  useEffect(() => {
+    if (!settingsLoaded) return;
+    if (feedEnabled && feedUrl) {
+      fetchFeed(feedUrl);
+    } else {
+      // Fallback: use a default feed URL if admin hasn't set one but feed is enabled
+      if (feedEnabled) {
+        fetchFeed('https://news.google.com/rss/search?q=entertainment+culture+trending');
+      } else {
+        setLoading(false);
+      }
+    }
+  }, [settingsLoaded, feedEnabled, feedUrl]);
+
+  // If feed is disabled, don't render anything
+  if (settingsLoaded && !feedEnabled) return null;
 
   return (
     <>
       <section className="container mx-auto px-4 py-16">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -344,7 +278,7 @@ const CultureEntertainmentFeed = () => {
             </span>
           </motion.div>
           <button
-            onClick={fetchFeed}
+            onClick={() => feedUrl && fetchFeed(feedUrl)}
             disabled={loading}
             className="glass glass-hover rounded-lg p-2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
           >
@@ -352,7 +286,6 @@ const CultureEntertainmentFeed = () => {
           </button>
         </div>
 
-        {/* Loading skeleton */}
         {loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -365,14 +298,12 @@ const CultureEntertainmentFeed = () => {
                   </div>
                   <div className="h-4 bg-muted/20 rounded w-3/4" />
                   <div className="h-3 bg-muted/20 rounded w-full" />
-                  <div className="h-3 bg-muted/20 rounded w-1/2" />
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* Error */}
         {error && !loading && (
           <div className="glass glow rounded-2xl p-8 text-center">
             <Sparkles className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
@@ -380,7 +311,6 @@ const CultureEntertainmentFeed = () => {
           </div>
         )}
 
-        {/* Cards Grid */}
         {!loading && !error && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map((item, i) => (
@@ -395,7 +325,6 @@ const CultureEntertainmentFeed = () => {
         )}
       </section>
 
-      {/* Detail Modal */}
       <CultureDetailModal item={selectedItem} onClose={() => setSelectedItem(null)} />
     </>
   );

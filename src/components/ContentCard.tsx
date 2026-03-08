@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import { Eye, Heart, Clock, TrendingUp, Flame } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import type { PostDisplay } from './ContentGrid';
 
 const categoryClass: Record<string, string> = {
@@ -10,13 +12,47 @@ const categoryClass: Record<string, string> = {
 };
 
 const ContentCard = ({ post, index, onClick }: { post: PostDisplay; index: number; onClick?: () => void }) => {
+  const { user } = useAuth();
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(post.likes);
+  const [likeLoading, setLikeLoading] = useState(false);
 
-  const handleLike = (e: React.MouseEvent) => {
+  // Check if user already liked this post
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('likes')
+      .select('id')
+      .eq('post_id', post.id)
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setLiked(true);
+      });
+  }, [user, post.id]);
+
+  const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    setLiked(!liked);
-    setLikes(prev => liked ? prev - 1 : prev + 1);
+    if (!user || likeLoading) return;
+    setLikeLoading(true);
+
+    if (liked) {
+      // Remove like
+      await supabase.from('likes').delete().eq('post_id', post.id).eq('user_id', user.id);
+      setLiked(false);
+      setLikes(prev => Math.max(0, prev - 1));
+      // Update post likes_count
+      await supabase.from('posts').update({ likes_count: Math.max(0, likes - 1) }).eq('id', post.id);
+    } else {
+      // Add like
+      const { error } = await supabase.from('likes').insert({ post_id: post.id, user_id: user.id });
+      if (!error) {
+        setLiked(true);
+        setLikes(prev => prev + 1);
+        await supabase.from('posts').update({ likes_count: likes + 1 }).eq('id', post.id);
+      }
+    }
+    setLikeLoading(false);
   };
 
   return (
