@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { SkeletonGrid } from './SkeletonCard';
 
 /* ── Types ────────────────────────────────────────────── */
 interface FeedItem {
@@ -315,23 +316,7 @@ const CultureEntertainmentFeed = () => {
           ))}
         </div>
 
-        {loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="glass rounded-2xl overflow-hidden animate-pulse">
-                <div className="h-48 bg-muted/20" />
-                <div className="p-5 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded-full bg-muted/20" />
-                    <div className="h-3 bg-muted/20 rounded w-24" />
-                  </div>
-                  <div className="h-4 bg-muted/20 rounded w-3/4" />
-                  <div className="h-3 bg-muted/20 rounded w-full" />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        {loading && <SkeletonGrid count={6} />}
 
         {error && !loading && (
           <div className="glass glow rounded-2xl p-8 text-center">

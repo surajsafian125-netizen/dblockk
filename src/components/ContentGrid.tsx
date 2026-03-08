@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import ContentCard from './ContentCard';
 import PostDetailModal from './PostDetailModal';
+import { SkeletonGrid } from './SkeletonCard';
 import { supabase } from '@/integrations/supabase/client';
 
 interface DBPost {
@@ -166,7 +167,7 @@ const ContentGrid = () => {
 
       {/* Grid */}
       {loading ? (
-        <div className="text-center py-16 text-muted-foreground">Loading posts...</div>
+        <SkeletonGrid count={6} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((post, i) => (
