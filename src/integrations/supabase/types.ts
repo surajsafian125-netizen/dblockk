@@ -162,6 +162,39 @@ export type Database = {
           },
         ]
       }
+      community_gigs: {
+        Row: {
+          category: string
+          contact_info: string
+          created_at: string
+          description: string
+          id: string
+          is_approved: boolean
+          title: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          contact_info: string
+          created_at?: string
+          description: string
+          id?: string
+          is_approved?: boolean
+          title: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          contact_info?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_approved?: boolean
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       likes: {
         Row: {
           created_at: string | null
