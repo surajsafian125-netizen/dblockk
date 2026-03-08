@@ -10,6 +10,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import AppSplash from "@/components/AppSplash";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
+import HustleBoard from "./pages/HustleBoard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const App = () => {
               <BrowserRouter>
                 <Routes>
                   <Route path="/" element={<Index />} />
+                  <Route path="/hustle-board" element={<HustleBoard />} />
                   <Route path="/admin" element={<Admin />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
