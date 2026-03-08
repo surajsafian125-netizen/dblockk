@@ -55,11 +55,10 @@ const Index = () => {
                 <PodcastCreatorChart />
               </div>
 
-              {/* Local News */}
-              <div className="grid gap-6 mt-6">
-                <LocalPulse />
-              </div>
             </section>
+
+            {/* Geo-Intelligence Hub */}
+            <GeoIntelligenceHub />
           </motion.div>
         )}
         <ContactSection />
