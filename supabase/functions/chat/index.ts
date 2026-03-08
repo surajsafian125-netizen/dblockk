@@ -12,7 +12,7 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized: No bearer token provided" }), {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -27,16 +27,47 @@ serve(async (req) => {
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: `Auth failed: ${userError?.message || "Invalid session"}` }), {
+      return new Response(JSON.stringify({ error: "Authentication failed" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const { messages } = await req.json();
+
+    // Validate messages
+    if (!Array.isArray(messages)) {
+      return new Response(JSON.stringify({ error: "Messages must be an array" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    for (const msg of messages) {
+      if (!msg.role || !msg.content || typeof msg.content !== 'string') {
+        return new Response(JSON.stringify({ error: "Invalid message format" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!['user', 'assistant'].includes(msg.role)) {
+        return new Response(JSON.stringify({ error: "Invalid message role" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (msg.content.length > 4000) {
+        return new Response(JSON.stringify({ error: "Message too long (max 4000 characters)" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+    if (messages.length > 50) {
+      return new Response(JSON.stringify({ error: "Too many messages in conversation" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const DEEPSEEK_API_KEY = Deno.env.get("VITE_DEEPSEEK_API_KEY");
     if (!DEEPSEEK_API_KEY) {
-      return new Response(JSON.stringify({ error: "VITE_DEEPSEEK_API_KEY is not configured in Supabase secrets" }), {
+      console.error("VITE_DEEPSEEK_API_KEY is not configured");
+      return new Response(JSON.stringify({ error: "AI service is not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -65,18 +96,12 @@ serve(async (req) => {
       const errBody = await response.text();
       console.error("DeepSeek API error:", response.status, errBody);
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "DeepSeek rate limit exceeded. Try again shortly." }), {
+        return new Response(JSON.stringify({ error: "AI service is busy. Try again shortly." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 401 || response.status === 403) {
-        return new Response(JSON.stringify({ error: `DeepSeek API key invalid or expired (${response.status})` }), {
-          status: 502,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      return new Response(JSON.stringify({ error: `DeepSeek API error ${response.status}: ${errBody.slice(0, 200)}` }), {
+      return new Response(JSON.stringify({ error: "AI service encountered an error" }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -87,7 +112,7 @@ serve(async (req) => {
     });
   } catch (e) {
     console.error("chat error:", e);
-    return new Response(JSON.stringify({ error: `Edge function error: ${e instanceof Error ? e.message : "Unknown"}` }), {
+    return new Response(JSON.stringify({ error: "An error occurred processing your request" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
