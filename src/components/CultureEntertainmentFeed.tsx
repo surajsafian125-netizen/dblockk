@@ -192,6 +192,8 @@ const CultureCard = ({
 };
 
 /* ── Main Feed Component ──────────────────────────────── */
+const CATEGORY_TABS = ['All', 'Music', 'Film', 'Fashion', 'Gaming'] as const;
+
 const CultureEntertainmentFeed = () => {
   const { user } = useAuth();
   const [items, setItems] = useState<FeedItem[]>([]);
@@ -201,8 +203,8 @@ const CultureEntertainmentFeed = () => {
   const [feedEnabled, setFeedEnabled] = useState(false);
   const [feedUrl, setFeedUrl] = useState('');
   const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('All');
 
-  // Fetch admin feed settings
   useEffect(() => {
     const loadSettings = async () => {
       const { data: enabledRow } = await supabase.from('admin_config').select('value').eq('key', 'feed_enabled').single();
@@ -223,7 +225,7 @@ const CultureEntertainmentFeed = () => {
       const json = await res.json();
       if (json.status === 'ok' && json.items?.length) {
         setItems(
-          json.items.slice(0, 9).map((item: any) => ({
+          json.items.slice(0, 18).map((item: any) => ({
             title: item.title || 'Untitled',
             description: item.description || '',
             content: item.content || item.description || '',
@@ -246,18 +248,28 @@ const CultureEntertainmentFeed = () => {
     if (!settingsLoaded) return;
     if (feedEnabled && feedUrl) {
       fetchFeed(feedUrl);
+    } else if (feedEnabled) {
+      fetchFeed('https://news.google.com/rss/search?q=entertainment+culture+trending');
     } else {
-      // Fallback: use a default feed URL if admin hasn't set one but feed is enabled
-      if (feedEnabled) {
-        fetchFeed('https://news.google.com/rss/search?q=entertainment+culture+trending');
-      } else {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   }, [settingsLoaded, feedEnabled, feedUrl]);
 
-  // If feed is disabled, don't render anything
   if (settingsLoaded && !feedEnabled) return null;
+
+  const CATEGORY_KEYWORDS: Record<string, string[]> = {
+    Music: ['music', 'song', 'album', 'artist', 'concert', 'rapper', 'hip-hop', 'singer', 'spotify', 'grammy'],
+    Film: ['film', 'movie', 'cinema', 'director', 'trailer', 'netflix', 'oscar', 'series', 'tv', 'actor', 'actress', 'hollywood'],
+    Fashion: ['fashion', 'style', 'designer', 'clothing', 'runway', 'brand', 'wear', 'outfit', 'vogue', 'model'],
+    Gaming: ['game', 'gaming', 'esport', 'xbox', 'playstation', 'nintendo', 'steam', 'gamer', 'console', 'fortnite'],
+  };
+
+  const filteredItems = activeTab === 'All'
+    ? items.slice(0, 9)
+    : items.filter(item => {
+        const text = `${item.title} ${item.description}`.toLowerCase();
+        return CATEGORY_KEYWORDS[activeTab]?.some(kw => text.includes(kw));
+      }).slice(0, 9);
 
   return (
     <>
@@ -284,6 +296,23 @@ const CultureEntertainmentFeed = () => {
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
+        </div>
+
+        {/* Category filter tabs */}
+        <div className="flex items-center gap-2 mb-8 flex-wrap">
+          {CATEGORY_TABS.map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                activeTab === tab
+                  ? 'bg-accent text-accent-foreground glow'
+                  : 'glass glass-hover text-muted-foreground'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
 
         {loading && (
@@ -313,7 +342,7 @@ const CultureEntertainmentFeed = () => {
 
         {!loading && !error && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items.map((item, i) => (
+            {filteredItems.map((item, i) => (
               <CultureCard
                 key={item.link + i}
                 item={item}
@@ -321,6 +350,11 @@ const CultureEntertainmentFeed = () => {
                 onClick={() => setSelectedItem(item)}
               />
             ))}
+            {filteredItems.length === 0 && (
+              <div className="col-span-full text-center py-12 text-muted-foreground text-sm">
+                No articles found for "{activeTab}". Try "All" or a different category.
+              </div>
+            )}
           </div>
         )}
       </section>
