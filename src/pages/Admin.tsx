@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Trash2, Edit, Eye, EyeOff, Send, Bot, Plus, Save, X, Upload, BarChart3, Newspaper, Loader2, Megaphone, Rss, Users, CheckCircle2 } from 'lucide-react';
+import { Trash2, Edit, Eye, EyeOff, Send, Bot, Plus, Save, X, Upload, BarChart3, Newspaper, Loader2, Megaphone, Rss, Users, CheckCircle2, Briefcase, Check, XCircle } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import Header from '@/components/Header';
 import ParticleBackground from '@/components/ParticleBackground';
@@ -55,6 +55,19 @@ const Admin = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [showLeads, setShowLeads] = useState(false);
 
+  // Gig moderation state
+  interface PendingGig {
+    id: string;
+    title: string;
+    description: string;
+    contact_info: string;
+    category: string;
+    created_at: string;
+    user_id: string;
+  }
+  const [pendingGigs, setPendingGigs] = useState<PendingGig[]>([]);
+  const [showGigMod, setShowGigMod] = useState(false);
+
   // Post form state
   const [showForm, setShowForm] = useState(false);
   const [editingPost, setEditingPost] = useState<DBPost | null>(null);
@@ -103,6 +116,7 @@ const Admin = () => {
       fetchAnalytics();
       fetchFeedSettings();
       fetchLeads();
+      fetchPendingGigs();
     }
   }, [isAdmin]);
 
