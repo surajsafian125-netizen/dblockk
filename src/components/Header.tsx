@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import ThemeToggle from './ThemeToggle';
 import AuthModal from './AuthModal';
 import NotificationBell from './NotificationBell';
+import MarqueeTicker from './MarqueeTicker';
 
 const Header = () => {
   const { isAuthenticated, user, logout, isAdmin } = useAuth();
@@ -69,6 +70,7 @@ const Header = () => {
           </div>
         </div>
       </motion.header>
+      <MarqueeTicker />
       <AuthModal mode={authModal} onClose={() => setAuthModal(null)} onSwitch={setAuthModal} />
     </>
   );
