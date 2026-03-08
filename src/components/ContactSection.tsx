@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Linkedin } from 'lucide-react';
+import { Mail, Linkedin, Rocket } from 'lucide-react';
+import PartnerModal from './PartnerModal';
 
 const socials = [
   {
@@ -27,6 +29,8 @@ const socials = [
 ];
 
 const ContactSection = () => {
+  const [partnerOpen, setPartnerOpen] = useState(false);
+
   return (
     <section id="contact" className="container mx-auto px-4 py-20">
       <motion.div
@@ -40,12 +44,23 @@ const ContactSection = () => {
           Let's <span className="text-primary text-glow">Work.</span>
         </h2>
 
-        <p className="text-muted-foreground leading-relaxed mb-12 text-base md:text-lg">
+        <p className="text-muted-foreground leading-relaxed mb-8 text-base md:text-lg">
           I'm a student who builds sleek, high-performing websites for businesses
           and creators. Operating 100% in the digital space, I skip the corporate
           fluff—just good energy and solid results. Whether you need a digital
           upgrade or want to collaborate, hit my line.
         </p>
+
+        {/* CTA Button */}
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={() => setPartnerOpen(true)}
+          className="mb-12 bg-primary text-primary-foreground rounded-xl px-8 py-4 text-base font-semibold hover:opacity-90 transition-all glow-strong flex items-center gap-3 mx-auto"
+        >
+          <Rocket className="h-5 w-5" />
+          Partner with D'Block
+        </motion.button>
 
         <div className="flex flex-col gap-4 max-w-md mx-auto">
           {socials.map((s, i) => (
@@ -74,6 +89,8 @@ const ContactSection = () => {
           ))}
         </div>
       </motion.div>
+
+      <PartnerModal open={partnerOpen} onClose={() => setPartnerOpen(false)} />
     </section>
   );
 };

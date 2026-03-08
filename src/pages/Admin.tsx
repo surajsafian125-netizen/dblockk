@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Trash2, Edit, Eye, EyeOff, Send, Bot, Plus, Save, X, Upload, BarChart3, Newspaper, Loader2, Megaphone, Rss } from 'lucide-react';
+import { Trash2, Edit, Eye, EyeOff, Send, Bot, Plus, Save, X, Upload, BarChart3, Newspaper, Loader2, Megaphone, Rss, Users, CheckCircle2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import Header from '@/components/Header';
 import ParticleBackground from '@/components/ParticleBackground';
@@ -40,6 +40,20 @@ const Admin = () => {
   const [chatHistory, setChatHistory] = useState<Msg[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Leads state
+  interface Lead {
+    id: string;
+    company_name: string;
+    email: string;
+    service: string;
+    budget_range: string | null;
+    project_details: string | null;
+    status: string;
+    created_at: string;
+  }
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [showLeads, setShowLeads] = useState(false);
 
   // Post form state
   const [showForm, setShowForm] = useState(false);
@@ -88,8 +102,22 @@ const Admin = () => {
       fetchPosts();
       fetchAnalytics();
       fetchFeedSettings();
+      fetchLeads();
     }
   }, [isAdmin]);
+
+  const fetchLeads = async () => {
+    const { data } = await supabase
+      .from('client_leads')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (data) setLeads(data as Lead[]);
+  };
+
+  const updateLeadStatus = async (id: string, status: string) => {
+    await supabase.from('client_leads').update({ status }).eq('id', id);
+    setLeads(prev => prev.map(l => l.id === id ? { ...l, status } : l));
+  };
 
   const fetchFeedSettings = async () => {
     const { data: enabledRow } = await supabase.from('admin_config').select('value').eq('key', 'feed_enabled').single();
@@ -502,7 +530,83 @@ const Admin = () => {
           <button onClick={() => setShowAnalytics(!showAnalytics)} className="glass rounded-xl px-4 py-2 text-sm font-medium glass-hover transition-all flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-primary" /> Analytics Control
           </button>
+          <button onClick={() => setShowLeads(!showLeads)} className="glass rounded-xl px-4 py-2 text-sm font-medium glass-hover transition-all flex items-center gap-2 relative">
+            <Users className="h-4 w-4 text-primary" /> Client Leads
+            {leads.filter(l => l.status === 'new').length > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 h-5 min-w-5 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1">
+                {leads.filter(l => l.status === 'new').length}
+              </span>
+            )}
+          </button>
         </div>
+
+        {/* Client Leads Panel */}
+        {showLeads && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass glow rounded-2xl p-6 mb-6">
+            <h2 className="font-display text-lg font-semibold mb-4 flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" /> Client Leads
+              <span className="text-xs text-muted-foreground font-normal ml-2">{leads.length} total</span>
+            </h2>
+            {leads.length === 0 ? (
+              <p className="text-muted-foreground text-sm text-center py-6">No leads yet. Share your Partner form!</p>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {leads.map((lead, i) => (
+                  <motion.div
+                    key={lead.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                    className={`rounded-xl p-4 border transition-all ${
+                      lead.status === 'new'
+                        ? 'border-primary/30 bg-primary/5'
+                        : 'border-border/20 bg-secondary/20'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-medium text-sm truncate">{lead.company_name}</h3>
+                          <span className={`text-[10px] rounded-full px-2 py-0.5 font-medium ${
+                            lead.status === 'new' ? 'bg-primary/15 text-primary' :
+                            lead.status === 'contacted' ? 'bg-accent/15 text-accent' :
+                            'bg-muted text-muted-foreground'
+                          }`}>
+                            {lead.status}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{lead.email} · {lead.service}</p>
+                        {lead.budget_range && <p className="text-xs text-muted-foreground mt-0.5">Budget: {lead.budget_range}</p>}
+                        {lead.project_details && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{lead.project_details}</p>}
+                        <p className="text-[10px] text-muted-foreground/60 mt-1">{new Date(lead.created_at).toLocaleString()}</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {lead.status === 'new' && (
+                          <button
+                            onClick={() => updateLeadStatus(lead.id, 'contacted')}
+                            className="p-1.5 rounded-lg hover:bg-accent/20 transition-colors text-accent"
+                            title="Mark as contacted"
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                          </button>
+                        )}
+                        <button
+                          onClick={async () => {
+                            await supabase.from('client_leads').delete().eq('id', lead.id);
+                            setLeads(prev => prev.filter(l => l.id !== lead.id));
+                          }}
+                          className="p-1.5 rounded-lg hover:bg-destructive/20 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {/* Analytics Control Panel */}
         {showAnalytics && (
