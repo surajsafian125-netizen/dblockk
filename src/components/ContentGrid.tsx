@@ -4,6 +4,7 @@ import ContentCard from './ContentCard';
 import PostDetailModal from './PostDetailModal';
 import { SkeletonGrid } from './SkeletonCard';
 import { supabase } from '@/integrations/supabase/client';
+import { useBookmarks } from '@/hooks/useBookmarks';
 
 interface DBPost {
   id: string;
@@ -51,6 +52,7 @@ const ContentGrid = () => {
   const [posts, setPosts] = useState<PostDisplay[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPost, setSelectedPost] = useState<PostDisplay | null>(null);
+  const { bookmarkedIds, toggleBookmark } = useBookmarks();
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -114,16 +116,13 @@ const ContentGrid = () => {
         Explore <span className="text-primary text-glow">Content</span>
       </motion.h2>
 
-      {/* Categories */}
       <div className="flex items-center gap-2 mb-4 flex-wrap justify-center">
         {categories.map(cat => (
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
             className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
-              activeCategory === cat
-                ? 'bg-primary text-primary-foreground glow'
-                : 'glass glass-hover'
+              activeCategory === cat ? 'bg-primary text-primary-foreground glow' : 'glass glass-hover'
             }`}
           >
             {cat}
@@ -131,16 +130,13 @@ const ContentGrid = () => {
         ))}
       </div>
 
-      {/* Filters */}
       <div className="flex items-center gap-2 mb-4 flex-wrap justify-center">
         {filters.map(f => (
           <button
             key={f}
             onClick={() => setActiveFilter(f)}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-              activeFilter === f
-                ? 'bg-accent text-accent-foreground'
-                : 'text-muted-foreground hover:text-foreground'
+              activeFilter === f ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             {f}
@@ -148,16 +144,13 @@ const ContentGrid = () => {
         ))}
       </div>
 
-      {/* Hashtags */}
       <div className="flex items-center gap-2 mb-8 flex-wrap justify-center">
         {hashtags.map(tag => (
           <button
             key={tag}
             onClick={() => setActiveTag(activeTag === tag ? null : tag)}
             className={`rounded-full px-3 py-1 text-xs transition-all ${
-              activeTag === tag
-                ? 'bg-primary/20 text-primary neon-border'
-                : 'text-muted-foreground hover:text-primary'
+              activeTag === tag ? 'bg-primary/20 text-primary neon-border' : 'text-muted-foreground hover:text-primary'
             }`}
           >
             {tag}
@@ -165,13 +158,19 @@ const ContentGrid = () => {
         ))}
       </div>
 
-      {/* Grid */}
       {loading ? (
         <SkeletonGrid count={6} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((post, i) => (
-            <ContentCard key={post.id} post={post} index={i} onClick={() => setSelectedPost(post)} />
+            <ContentCard
+              key={post.id}
+              post={post}
+              index={i}
+              onClick={() => setSelectedPost(post)}
+              isBookmarked={bookmarkedIds.has(post.id)}
+              onToggleBookmark={toggleBookmark}
+            />
           ))}
         </div>
       )}
@@ -182,7 +181,12 @@ const ContentGrid = () => {
         </div>
       )}
 
-      <PostDetailModal post={selectedPost} onClose={() => setSelectedPost(null)} />
+      <PostDetailModal
+        post={selectedPost}
+        onClose={() => setSelectedPost(null)}
+        isBookmarked={selectedPost ? bookmarkedIds.has(selectedPost.id) : false}
+        onToggleBookmark={toggleBookmark}
+      />
     </section>
   );
 };

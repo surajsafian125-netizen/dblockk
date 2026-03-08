@@ -1,8 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Eye, Heart, Clock, TrendingUp, MessageCircle, Send } from 'lucide-react';
+import { X, Eye, Heart, Clock, TrendingUp, MessageCircle, Send, Bookmark, Share2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { sharePost } from '@/lib/shareUtils';
 import type { PostDisplay } from './ContentGrid';
 
 interface Comment {
@@ -15,9 +16,13 @@ interface Comment {
 const PostDetailModal = ({
   post,
   onClose,
+  isBookmarked,
+  onToggleBookmark,
 }: {
   post: PostDisplay | null;
   onClose: () => void;
+  isBookmarked?: boolean;
+  onToggleBookmark?: (postId: string) => void;
 }) => {
   const { user } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
@@ -31,7 +36,6 @@ const PostDetailModal = ({
     setLikes(post.likes);
     setLiked(false);
 
-    // Check if user already liked
     if (user) {
       supabase
         .from('likes')
@@ -97,10 +101,8 @@ const PostDetailModal = ({
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={onClose}
         >
-          {/* Backdrop */}
           <div className="absolute inset-0 bg-background/80 backdrop-blur-md" />
 
-          {/* Modal */}
           <motion.div
             initial={{ opacity: 0, scale: 0.92, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -109,7 +111,6 @@ const PostDetailModal = ({
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border border-primary/10 bg-card/60 backdrop-blur-xl shadow-[0_0_60px_-10px_hsl(var(--primary)/0.15)]"
           >
-            {/* Close */}
             <button
               onClick={onClose}
               className="absolute top-4 right-4 z-10 rounded-full p-2 glass glass-hover text-muted-foreground hover:text-foreground transition-colors"
@@ -117,59 +118,64 @@ const PostDetailModal = ({
               <X className="h-4 w-4" />
             </button>
 
-            {/* Cover image */}
             <div className="relative h-56 sm:h-64 overflow-hidden rounded-t-2xl">
-              <img
-                src={post.image}
-                alt={post.title}
-                className="w-full h-full object-cover"
-              />
-              <div
-                className="absolute inset-0"
-                style={{ background: 'linear-gradient(to top, hsl(var(--card) / 0.9), transparent 60%)' }}
-              />
+              <img src={post.image} alt={post.title} className="w-full h-full object-cover" />
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, hsl(var(--card) / 0.9), transparent 60%)' }} />
             </div>
 
-            {/* Content */}
             <div className="p-6 -mt-10 relative">
-              {/* Tags */}
               <div className="flex flex-wrap gap-1.5 mb-3">
                 {post.tags.map(tag => (
-                  <span key={tag} className="text-xs text-primary/70 bg-primary/5 rounded-full px-2 py-0.5">
-                    #{tag}
-                  </span>
+                  <span key={tag} className="text-xs text-primary/70 bg-primary/5 rounded-full px-2 py-0.5">#{tag}</span>
                 ))}
               </div>
 
               <h2 className="font-display text-2xl font-bold mb-3">{post.title}</h2>
 
-              {/* Stats row */}
               <div className="flex items-center gap-4 text-xs text-muted-foreground mb-5">
                 <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {post.views.toLocaleString()} views</span>
                 <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {post.readingTime}m read</span>
                 <span className="flex items-center gap-1 text-primary"><TrendingUp className="h-3 w-3" /> {post.engagementScore}%</span>
               </div>
 
-              {/* Full text */}
               <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap mb-6">
                 {post.content || post.description}
               </div>
 
-              {/* Like button */}
-              <div className="flex items-center gap-4 mb-6 pb-6 border-b border-border/40">
+              {/* Action buttons */}
+              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-border/40">
                 <motion.button
                   whileTap={{ scale: 1.2 }}
                   onClick={handleLike}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                    liked
-                      ? 'bg-primary/15 text-primary'
-                      : 'glass glass-hover text-muted-foreground'
+                    liked ? 'bg-primary/15 text-primary' : 'glass glass-hover text-muted-foreground'
                   }`}
                 >
                   <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} />
                   {likes} {likes === 1 ? 'Like' : 'Likes'}
                 </motion.button>
-                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+
+                <motion.button
+                  whileTap={{ scale: 1.2 }}
+                  onClick={() => onToggleBookmark?.(post.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                    isBookmarked ? 'bg-primary/15 text-primary' : 'glass glass-hover text-muted-foreground'
+                  }`}
+                >
+                  <Bookmark className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`} />
+                  {isBookmarked ? 'Stashed' : 'Stash'}
+                </motion.button>
+
+                <motion.button
+                  whileTap={{ scale: 1.2 }}
+                  onClick={() => sharePost(post.title, post.description, post.id)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium glass glass-hover text-muted-foreground transition-all"
+                >
+                  <Share2 className="h-4 w-4" />
+                  Share
+                </motion.button>
+
+                <span className="flex items-center gap-1 text-xs text-muted-foreground ml-auto">
                   <MessageCircle className="h-3.5 w-3.5" /> {comments.length} comments
                 </span>
               </div>
@@ -186,7 +192,6 @@ const PostDetailModal = ({
                 ))}
               </div>
 
-              {/* Comment input */}
               {user && (
                 <div className="flex gap-2">
                   <input

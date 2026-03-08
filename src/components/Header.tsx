@@ -1,15 +1,23 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { Bookmark } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import ThemeToggle from './ThemeToggle';
 import AuthModal from './AuthModal';
 import NotificationBell from './NotificationBell';
 import MarqueeTicker from './MarqueeTicker';
+import MyStash from './MyStash';
+import PostDetailModal from './PostDetailModal';
+import { useBookmarks } from '@/hooks/useBookmarks';
+import type { PostDisplay } from './ContentGrid';
 
 const Header = () => {
   const { isAuthenticated, user, logout, isAdmin } = useAuth();
   const [authModal, setAuthModal] = useState<'login' | 'signup' | null>(null);
+  const [stashOpen, setStashOpen] = useState(false);
+  const [stashPost, setStashPost] = useState<PostDisplay | null>(null);
+  const { bookmarkedIds, bookmarkedPosts, toggleBookmark, loading: stashLoading } = useBookmarks();
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -38,6 +46,19 @@ const Header = () => {
             {isAuthenticated ? (
               <>
                 <NotificationBell />
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setStashOpen(true)}
+                  className="relative glass rounded-lg p-2 glass-hover transition-all"
+                  title="My Stash"
+                >
+                  <Bookmark className="h-4 w-4" />
+                  {bookmarkedPosts.length > 0 && (
+                    <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">
+                      {bookmarkedPosts.length}
+                    </span>
+                  )}
+                </motion.button>
                 {isAdmin && (
                   <Link to="/admin" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                     Admin
@@ -72,6 +93,20 @@ const Header = () => {
       </motion.header>
       <MarqueeTicker />
       <AuthModal mode={authModal} onClose={() => setAuthModal(null)} onSwitch={setAuthModal} />
+      <MyStash
+        open={stashOpen}
+        onClose={() => setStashOpen(false)}
+        posts={bookmarkedPosts}
+        loading={stashLoading}
+        onRemove={toggleBookmark}
+        onSelect={(post) => setStashPost(post)}
+      />
+      <PostDetailModal
+        post={stashPost}
+        onClose={() => setStashPost(null)}
+        isBookmarked={stashPost ? bookmarkedIds.has(stashPost.id) : false}
+        onToggleBookmark={toggleBookmark}
+      />
     </>
   );
 };

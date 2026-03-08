@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion';
-import { Eye, Heart, Clock, TrendingUp, Flame } from 'lucide-react';
+import { Eye, Heart, Clock, TrendingUp, Flame, Bookmark, Share2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { sharePost } from '@/lib/shareUtils';
 import type { PostDisplay } from './ContentGrid';
 
 const categoryClass: Record<string, string> = {
@@ -11,13 +12,24 @@ const categoryClass: Record<string, string> = {
   vibes: 'bg-category-vibes/10 text-category-vibes',
 };
 
-const ContentCard = ({ post, index, onClick }: { post: PostDisplay; index: number; onClick?: () => void }) => {
+const ContentCard = ({
+  post,
+  index,
+  onClick,
+  isBookmarked,
+  onToggleBookmark,
+}: {
+  post: PostDisplay;
+  index: number;
+  onClick?: () => void;
+  isBookmarked?: boolean;
+  onToggleBookmark?: (postId: string) => void;
+}) => {
   const { user } = useAuth();
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(post.likes);
   const [likeLoading, setLikeLoading] = useState(false);
 
-  // Check if user already liked this post
   useEffect(() => {
     if (!user) return;
     supabase
@@ -35,16 +47,12 @@ const ContentCard = ({ post, index, onClick }: { post: PostDisplay; index: numbe
     e.stopPropagation();
     if (!user || likeLoading) return;
     setLikeLoading(true);
-
     if (liked) {
-      // Remove like
       await supabase.from('likes').delete().eq('post_id', post.id).eq('user_id', user.id);
       setLiked(false);
       setLikes(prev => Math.max(0, prev - 1));
-      // Update post likes_count
       await supabase.from('posts').update({ likes_count: Math.max(0, likes - 1) }).eq('id', post.id);
     } else {
-      // Add like
       const { error } = await supabase.from('likes').insert({ post_id: post.id, user_id: user.id });
       if (!error) {
         setLiked(true);
@@ -53,6 +61,16 @@ const ContentCard = ({ post, index, onClick }: { post: PostDisplay; index: numbe
       }
     }
     setLikeLoading(false);
+  };
+
+  const handleBookmark = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleBookmark?.(post.id);
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    sharePost(post.title, post.description, post.id);
   };
 
   return (
@@ -98,7 +116,7 @@ const ContentCard = ({ post, index, onClick }: { post: PostDisplay; index: numbe
             <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {post.views.toLocaleString()}</span>
             <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {post.readingTime}m</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <div className="flex items-center gap-1 text-primary text-xs">
               <TrendingUp className="h-3 w-3" /> {post.engagementScore}%
             </div>
@@ -109,6 +127,22 @@ const ContentCard = ({ post, index, onClick }: { post: PostDisplay; index: numbe
             >
               <Heart className={`h-3.5 w-3.5 ${liked ? 'fill-current' : ''}`} />
               {likes}
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 1.2 }}
+              onClick={handleBookmark}
+              className={`transition-colors ${isBookmarked ? 'text-primary' : 'hover:text-primary'}`}
+              title={isBookmarked ? 'Remove from Stash' : 'Save to Stash'}
+            >
+              <Bookmark className={`h-3.5 w-3.5 ${isBookmarked ? 'fill-current' : ''}`} />
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 1.2 }}
+              onClick={handleShare}
+              className="hover:text-primary transition-colors"
+              title="Share"
+            >
+              <Share2 className="h-3.5 w-3.5" />
             </motion.button>
           </div>
         </div>
