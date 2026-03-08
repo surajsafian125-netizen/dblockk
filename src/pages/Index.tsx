@@ -58,6 +58,9 @@ const Index = () => {
 
             </section>
 
+            {/* Culture & Entertainment Feed */}
+            <CultureEntertainmentFeed />
+
             {/* Geo-Intelligence Hub */}
             <GeoIntelligenceHub />
           </motion.div>
