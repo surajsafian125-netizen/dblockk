@@ -133,6 +133,27 @@ const Admin = () => {
     setLeads(prev => prev.map(l => l.id === id ? { ...l, status } : l));
   };
 
+  const fetchPendingGigs = async () => {
+    const { data } = await supabase
+      .from('community_gigs')
+      .select('*')
+      .eq('is_approved', false)
+      .order('created_at', { ascending: false });
+    if (data) setPendingGigs(data as PendingGig[]);
+  };
+
+  const approveGig = async (id: string) => {
+    await supabase.from('community_gigs').update({ is_approved: true }).eq('id', id);
+    setPendingGigs(prev => prev.filter(g => g.id !== id));
+    toast.success('Gig approved!');
+  };
+
+  const rejectGig = async (id: string) => {
+    await supabase.from('community_gigs').delete().eq('id', id);
+    setPendingGigs(prev => prev.filter(g => g.id !== id));
+    toast.success('Gig rejected and removed');
+  };
+
   const fetchFeedSettings = async () => {
     const { data: enabledRow } = await supabase.from('admin_config').select('value').eq('key', 'feed_enabled').single();
     const { data: urlRow } = await supabase.from('admin_config').select('value').eq('key', 'feed_rss_url').single();
