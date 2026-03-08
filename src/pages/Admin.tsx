@@ -573,6 +573,14 @@ const Admin = () => {
               </span>
             )}
           </button>
+          <button onClick={() => setShowGigMod(!showGigMod)} className="glass rounded-xl px-4 py-2 text-sm font-medium glass-hover transition-all flex items-center gap-2 relative">
+            <Briefcase className="h-4 w-4 text-primary" /> Gig Moderation
+            {pendingGigs.length > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 h-5 min-w-5 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1">
+                {pendingGigs.length}
+              </span>
+            )}
+          </button>
         </div>
 
         {/* Client Leads Panel */}
@@ -643,7 +651,58 @@ const Admin = () => {
           </motion.div>
         )}
 
-        {/* Analytics Control Panel */}
+        {/* Gig Moderation Panel */}
+        {showGigMod && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass glow rounded-2xl p-6 mb-6">
+            <h2 className="font-display text-lg font-semibold mb-4 flex items-center gap-2">
+              <Briefcase className="h-5 w-5 text-primary" /> Gig Moderation Queue
+              <span className="text-xs text-muted-foreground font-normal ml-2">{pendingGigs.length} pending</span>
+            </h2>
+            {pendingGigs.length === 0 ? (
+              <p className="text-muted-foreground text-sm text-center py-6">No pending gigs to review 🎉</p>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {pendingGigs.map((gig, i) => (
+                  <motion.div
+                    key={gig.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                    className="rounded-xl p-4 border border-border/20 bg-secondary/20"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-medium text-sm">{gig.title}</h3>
+                          <span className="text-[10px] rounded-full px-2 py-0.5 font-medium bg-muted text-muted-foreground">{gig.category}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-3 mb-1">{gig.description}</p>
+                        <p className="text-xs text-muted-foreground/60">Contact: {gig.contact_info} · {new Date(gig.created_at).toLocaleString()}</p>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          onClick={() => approveGig(gig.id)}
+                          className="p-2 rounded-lg bg-green-500/10 hover:bg-green-500/20 transition-colors"
+                          title="Approve"
+                        >
+                          <Check className="h-4 w-4 text-green-400" />
+                        </button>
+                        <button
+                          onClick={() => rejectGig(gig.id)}
+                          className="p-2 rounded-lg bg-destructive/10 hover:bg-destructive/20 transition-colors"
+                          title="Reject"
+                        >
+                          <XCircle className="h-4 w-4 text-destructive" />
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+
         {showAnalytics && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass glow rounded-2xl p-6 mb-6">
             <h2 className="font-display text-lg font-semibold mb-4 flex items-center gap-2">
