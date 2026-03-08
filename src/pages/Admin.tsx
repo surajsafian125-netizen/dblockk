@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Trash2, Edit, Eye, EyeOff, Send, Bot, Plus, Save, X, Upload, BarChart3, Newspaper, Loader2, Megaphone } from 'lucide-react';
+import { Trash2, Edit, Eye, EyeOff, Send, Bot, Plus, Save, X, Upload, BarChart3, Newspaper, Loader2, Megaphone, Rss } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import Header from '@/components/Header';
 import ParticleBackground from '@/components/ParticleBackground';
 import Footer from '@/components/Footer';
@@ -59,6 +60,11 @@ const Admin = () => {
   const [broadcastMsg, setBroadcastMsg] = useState('');
   const [broadcasting, setBroadcasting] = useState(false);
 
+  // Feed settings state
+  const [feedEnabled, setFeedEnabled] = useState(false);
+  const [feedUrl, setFeedUrl] = useState('');
+  const [feedSaving, setFeedSaving] = useState(false);
+
   // Analytics control state
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [analyticsId, setAnalyticsId] = useState('');
@@ -81,8 +87,32 @@ const Admin = () => {
     if (isAdmin) {
       fetchPosts();
       fetchAnalytics();
+      fetchFeedSettings();
     }
   }, [isAdmin]);
+
+  const fetchFeedSettings = async () => {
+    const { data: enabledRow } = await supabase.from('admin_config').select('value').eq('key', 'feed_enabled').single();
+    const { data: urlRow } = await supabase.from('admin_config').select('value').eq('key', 'feed_rss_url').single();
+    if (enabledRow) setFeedEnabled(enabledRow.value === 'true');
+    if (urlRow) setFeedUrl(urlRow.value);
+  };
+
+  const saveFeedSettings = async () => {
+    setFeedSaving(true);
+    const upsertRow = async (key: string, value: string) => {
+      const { data: existing } = await supabase.from('admin_config').select('key').eq('key', key).single();
+      if (existing) {
+        await supabase.from('admin_config').update({ value }).eq('key', key);
+      } else {
+        await supabase.from('admin_config').insert({ key, value });
+      }
+    };
+    await upsertRow('feed_enabled', feedEnabled ? 'true' : 'false');
+    await upsertRow('feed_rss_url', feedUrl.trim());
+    setFeedSaving(false);
+    toast.success('Feed settings saved!');
+  };
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -519,6 +549,39 @@ const Admin = () => {
             </button>
           </motion.div>
         )}
+
+        {/* Feed Settings */}
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass glow rounded-2xl p-6 mb-6">
+          <h2 className="font-display text-lg font-semibold mb-4 flex items-center gap-2">
+            <Rss className="h-5 w-5 text-primary" /> Automated News Feed
+          </h2>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">Enable Automated News</p>
+                <p className="text-xs text-muted-foreground">When enabled, the Culture feed fetches live articles from your RSS URL</p>
+              </div>
+              <Switch checked={feedEnabled} onCheckedChange={setFeedEnabled} />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">RSS Feed URL</label>
+              <input
+                value={feedUrl}
+                onChange={e => setFeedUrl(e.target.value)}
+                placeholder="https://news.google.com/rss/search?q=entertainment+culture"
+                className="w-full bg-secondary/30 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground"
+              />
+            </div>
+            <button
+              onClick={saveFeedSettings}
+              disabled={feedSaving}
+              className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm font-medium hover:opacity-90 transition-all glow flex items-center gap-2 disabled:opacity-40"
+            >
+              {feedSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Save Feed Settings
+            </button>
+          </div>
+        </motion.div>
 
         {/* Send Broadcast */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass glow rounded-2xl p-6 mb-6">
