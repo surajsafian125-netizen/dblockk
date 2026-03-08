@@ -42,6 +42,9 @@ const Header = () => {
             <span className="text-primary text-glow">D'Block</span>
           </Link>
           <div className="flex items-center gap-3">
+            <Link to="/hustle-board" className="text-sm text-muted-foreground hover:text-primary transition-colors hidden sm:inline">
+              Hustle Board
+            </Link>
             <ThemeToggle />
             {isAuthenticated ? (
               <>
