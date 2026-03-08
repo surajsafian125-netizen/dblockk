@@ -31,6 +31,19 @@ const PostDetailModal = ({
     setLikes(post.likes);
     setLiked(false);
 
+    // Check if user already liked
+    if (user) {
+      supabase
+        .from('likes')
+        .select('id')
+        .eq('post_id', post.id)
+        .eq('user_id', user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) setLiked(true);
+        });
+    }
+
     const fetchComments = async () => {
       const { data } = await supabase
         .from('comments')
@@ -40,11 +53,23 @@ const PostDetailModal = ({
       if (data) setComments(data);
     };
     fetchComments();
-  }, [post]);
+  }, [post, user]);
 
-  const handleLike = () => {
-    setLiked(!liked);
-    setLikes(prev => (liked ? prev - 1 : prev + 1));
+  const handleLike = async () => {
+    if (!user || !post) return;
+    if (liked) {
+      await supabase.from('likes').delete().eq('post_id', post.id).eq('user_id', user.id);
+      setLiked(false);
+      setLikes(prev => Math.max(0, prev - 1));
+      await supabase.from('posts').update({ likes_count: Math.max(0, likes - 1) }).eq('id', post.id);
+    } else {
+      const { error } = await supabase.from('likes').insert({ post_id: post.id, user_id: user.id });
+      if (!error) {
+        setLiked(true);
+        setLikes(prev => prev + 1);
+        await supabase.from('posts').update({ likes_count: likes + 1 }).eq('id', post.id);
+      }
+    }
   };
 
   const handleComment = async () => {
