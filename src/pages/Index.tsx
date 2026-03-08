@@ -8,7 +8,7 @@ import DailyTechLaunches from '@/components/DailyTechLaunches';
 import TechCategoryGrowth from '@/components/TechCategoryGrowth';
 import MatchDay from '@/components/MatchDay';
 import PodcastCreatorChart from '@/components/PodcastCreatorChart';
-import LocalPulse from '@/components/LocalPulse';
+import GeoIntelligenceHub from '@/components/GeoIntelligenceHub';
 import FloatingActionButton from '@/components/FloatingActionButton';
 import ParticleBackground from '@/components/ParticleBackground';
 import ContactSection from '@/components/ContactSection';
@@ -55,11 +55,10 @@ const Index = () => {
                 <PodcastCreatorChart />
               </div>
 
-              {/* Local News */}
-              <div className="grid gap-6 mt-6">
-                <LocalPulse />
-              </div>
             </section>
+
+            {/* Geo-Intelligence Hub */}
+            <GeoIntelligenceHub />
           </motion.div>
         )}
         <ContactSection />
