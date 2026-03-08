@@ -68,6 +68,39 @@ export type Database = {
         }
         Relationships: []
       }
+      client_leads: {
+        Row: {
+          budget_range: string | null
+          company_name: string
+          created_at: string
+          email: string
+          id: string
+          project_details: string | null
+          service: string
+          status: string
+        }
+        Insert: {
+          budget_range?: string | null
+          company_name: string
+          created_at?: string
+          email: string
+          id?: string
+          project_details?: string | null
+          service: string
+          status?: string
+        }
+        Update: {
+          budget_range?: string | null
+          company_name?: string
+          created_at?: string
+          email?: string
+          id?: string
+          project_details?: string | null
+          service?: string
+          status?: string
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           content: string
