@@ -10,6 +10,11 @@ interface LocalArticle {
   source: string;
 }
 
+interface LocalPulseProps {
+  cityQuery?: string;
+  countryQuery?: string;
+}
+
 const fallbackThumb = 'https://images.unsplash.com/photo-1504711434969-e33886168d6c?w=400&h=250&fit=crop';
 
 const timeAgo = (date: string) => {
@@ -21,17 +26,25 @@ const timeAgo = (date: string) => {
   return `${Math.floor(hrs / 24)}d ago`;
 };
 
-const LocalPulse = () => {
+const LocalPulse = ({ cityQuery, countryQuery }: LocalPulseProps) => {
   const [articles, setArticles] = useState<LocalArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+
+  const query = cityQuery
+    ? `${cityQuery}+news`
+    : 'Ghana+news';
+
+  const label = cityQuery
+    ? `${cityQuery}${countryQuery ? `, ${countryQuery}` : ''}`
+    : 'Ghana';
 
   const fetchNews = async () => {
     setLoading(true);
     setError(false);
     try {
       const res = await fetch(
-        'https://api.rss2json.com/v1/api.json?rss_url=https://news.google.com/rss/search?q=Ghana+news'
+        `https://api.rss2json.com/v1/api.json?rss_url=https://news.google.com/rss/search?q=${encodeURIComponent(query)}`
       );
       const json = await res.json();
       if (json.status === 'ok' && json.items?.length) {
@@ -53,7 +66,7 @@ const LocalPulse = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchNews(); }, []);
+  useEffect(() => { fetchNews(); }, [query]);
 
   return (
     <motion.div
@@ -67,6 +80,7 @@ const LocalPulse = () => {
         <div className="flex items-center gap-2">
           <MapPin className="h-5 w-5 text-primary" />
           <h3 className="font-display font-semibold text-lg">Local Pulse</h3>
+          <span className="text-xs text-muted-foreground">— {label}</span>
           <span className="text-[10px] bg-primary/15 text-primary rounded-full px-2 py-0.5 font-medium flex items-center gap-1">
             <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" /> Live
           </span>

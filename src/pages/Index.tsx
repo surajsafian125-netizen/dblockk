@@ -8,7 +8,7 @@ import DailyTechLaunches from '@/components/DailyTechLaunches';
 import TechCategoryGrowth from '@/components/TechCategoryGrowth';
 import MatchDay from '@/components/MatchDay';
 import PodcastCreatorChart from '@/components/PodcastCreatorChart';
-import LocalPulse from '@/components/LocalPulse';
+import GeoIntelligenceHub from '@/components/GeoIntelligenceHub';
 import FloatingActionButton from '@/components/FloatingActionButton';
 import ParticleBackground from '@/components/ParticleBackground';
 import ContactSection from '@/components/ContactSection';
