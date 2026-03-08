@@ -10,7 +10,7 @@ const Hero = () => {
   };
 
   return (
-    <section className="relative min-h-[85vh] flex flex-col items-center justify-center px-4 pt-20">
+    <section className="relative min-h-[85vh] flex flex-col items-center justify-center px-4 pt-28">
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
