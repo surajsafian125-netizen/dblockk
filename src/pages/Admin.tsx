@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Trash2, Edit, Eye, EyeOff, Send, Bot, Plus, Save, X, Upload, BarChart3, Newspaper, Loader2, Megaphone, Rss } from 'lucide-react';
+import { Trash2, Edit, Eye, EyeOff, Send, Bot, Plus, Save, X, Upload, BarChart3, Newspaper, Loader2, Megaphone, Rss, Users, CheckCircle2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import Header from '@/components/Header';
 import ParticleBackground from '@/components/ParticleBackground';
@@ -40,6 +40,20 @@ const Admin = () => {
   const [chatHistory, setChatHistory] = useState<Msg[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Leads state
+  interface Lead {
+    id: string;
+    company_name: string;
+    email: string;
+    service: string;
+    budget_range: string | null;
+    project_details: string | null;
+    status: string;
+    created_at: string;
+  }
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [showLeads, setShowLeads] = useState(false);
 
   // Post form state
   const [showForm, setShowForm] = useState(false);
@@ -88,8 +102,22 @@ const Admin = () => {
       fetchPosts();
       fetchAnalytics();
       fetchFeedSettings();
+      fetchLeads();
     }
   }, [isAdmin]);
+
+  const fetchLeads = async () => {
+    const { data } = await supabase
+      .from('client_leads')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (data) setLeads(data as Lead[]);
+  };
+
+  const updateLeadStatus = async (id: string, status: string) => {
+    await supabase.from('client_leads').update({ status }).eq('id', id);
+    setLeads(prev => prev.map(l => l.id === id ? { ...l, status } : l));
+  };
 
   const fetchFeedSettings = async () => {
     const { data: enabledRow } = await supabase.from('admin_config').select('value').eq('key', 'feed_enabled').single();
