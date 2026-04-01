@@ -588,6 +588,9 @@ const Admin = () => {
           </button>
         </div>
 
+        {/* Security Terminal */}
+        {showSecurity && <SecurityTerminal />}
+
         {/* Client Leads Panel */}
         {showLeads && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass glow rounded-2xl p-6 mb-6">
