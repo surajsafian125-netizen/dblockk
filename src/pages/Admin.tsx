@@ -583,6 +583,9 @@ const Admin = () => {
               </span>
             )}
           </button>
+          <button onClick={() => setShowSecurity(!showSecurity)} className="glass rounded-xl px-4 py-2 text-sm font-medium glass-hover transition-all flex items-center gap-2">
+            <Shield className="h-4 w-4 text-primary" /> Security Terminal
+          </button>
         </div>
 
         {/* Client Leads Panel */}
