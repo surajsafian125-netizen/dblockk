@@ -92,6 +92,7 @@ const Admin = () => {
   const [feedEnabled, setFeedEnabled] = useState(false);
   const [feedUrl, setFeedUrl] = useState('');
   const [feedSaving, setFeedSaving] = useState(false);
+  const [showSecurity, setShowSecurity] = useState(false);
 
   // Analytics control state
   const [showAnalytics, setShowAnalytics] = useState(false);
