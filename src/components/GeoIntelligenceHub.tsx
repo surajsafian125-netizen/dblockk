@@ -196,7 +196,7 @@ const GeoIntelligenceHub = () => {
             ) : weather ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {/* Main temp */}
-                <div className="glass rounded-xl p-4 flex flex-col items-center justify-center col-span-2 md:col-span-1">
+                <div className="glass rounded-xl p-4 flex flex-col items-center justify-center col-span-2 sm:col-span-1">
                   <WeatherIcon className="h-10 w-10 text-primary mb-2" />
                   <span className="font-display text-4xl font-bold">{weather.temperature}°C</span>
                   <span className="text-xs text-muted-foreground mt-1">{weatherInfo?.label}</span>
