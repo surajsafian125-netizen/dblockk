@@ -42,7 +42,7 @@ const MarqueeTicker = () => {
   const items = [...coins, ...coins];
 
   return (
-    <div className="fixed top-16 left-0 right-0 z-40 overflow-hidden border-b border-border/10 bg-background/60 backdrop-blur-md">
+    <div className="fixed top-16 left-0 right-0 z-40 overflow-hidden border-b border-border/10 bg-background/60 backdrop-blur-md max-w-[100vw]">
       <div className="marquee-track flex items-center gap-8 py-1.5 whitespace-nowrap">
         {items.map((coin, i) => {
           const isPositive = coin.usd_24h_change >= 0;
