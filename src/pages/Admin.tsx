@@ -909,7 +909,7 @@ const Admin = () => {
               {chatHistory.map((msg, i) => (
                 <div key={i} className={`text-sm p-3 rounded-xl ${msg.role === 'user' ? 'bg-primary/10 ml-4' : 'bg-secondary/50 mr-4'}`}>
                   {msg.role === 'assistant' ? (
-                    <div className="prose prose-sm prose-invert max-w-none">
+                    <div className="prose prose-sm prose-invert max-w-none [&_img]:rounded-xl [&_img]:my-4 [&_img]:w-full [&_img]:max-h-80 [&_img]:object-cover [&_img]:shadow-lg">
                       <ReactMarkdown>{msg.content}</ReactMarkdown>
                     </div>
                   ) : msg.content}
