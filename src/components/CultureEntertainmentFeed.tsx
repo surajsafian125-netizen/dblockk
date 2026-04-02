@@ -275,25 +275,25 @@ const CultureEntertainmentFeed = () => {
   return (
     <>
       <section className="container mx-auto px-4 py-16">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="flex items-center gap-3"
+            className="flex items-center gap-3 flex-wrap min-w-0"
           >
-            <Sparkles className="h-6 w-6 text-accent" />
-            <h2 className="font-display text-3xl font-bold">
+            <Sparkles className="h-6 w-6 text-accent shrink-0" />
+            <h2 className="font-display text-2xl sm:text-3xl font-bold">
               Culture & Entertainment <span className="text-accent">Feed</span>
             </h2>
-            <span className="text-[10px] bg-primary/15 text-primary rounded-full px-2 py-0.5 font-medium flex items-center gap-1">
+            <span className="text-[10px] bg-primary/15 text-primary rounded-full px-2 py-0.5 font-medium flex items-center gap-1 shrink-0">
               <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" /> Live
             </span>
           </motion.div>
           <button
             onClick={() => feedUrl && fetchFeed(feedUrl)}
             disabled={loading}
-            className="glass glass-hover rounded-lg p-2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+            className="glass glass-hover rounded-lg p-2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 shrink-0"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </button>

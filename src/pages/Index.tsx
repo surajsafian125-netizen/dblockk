@@ -19,7 +19,7 @@ const Index = () => {
   const { isAuthenticated } = useAuth();
 
   return (
-    <div className="min-h-screen gradient-bg relative">
+    <div className="min-h-screen gradient-bg relative overflow-x-hidden">
       <ParticleBackground />
       <Header />
       <div className="relative z-10">
