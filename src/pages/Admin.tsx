@@ -96,6 +96,8 @@ const Admin = () => {
   const [showDraftEditor, setShowDraftEditor] = useState(false);
   const [draftPreview, setDraftPreview] = useState(false);
   const [publishingDraft, setPublishingDraft] = useState(false);
+  // Feed settings state
+  const [feedEnabled, setFeedEnabled] = useState(false);
   const [feedUrl, setFeedUrl] = useState('');
   const [feedSaving, setFeedSaving] = useState(false);
   const [showSecurity, setShowSecurity] = useState(false);
