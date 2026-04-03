@@ -987,12 +987,23 @@ const Admin = () => {
               {chatHistory.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-8">Ask me anything about your content...</p>
               )}
-              {chatHistory.map((msg, i) => (
+               {chatHistory.map((msg, i) => (
                 <div key={i} className={`text-sm p-3 rounded-xl ${msg.role === 'user' ? 'bg-primary/10 ml-4' : 'bg-secondary/50 mr-4'}`}>
                   {msg.role === 'assistant' ? (
-                    <div className="prose prose-sm prose-invert max-w-none [&_img]:rounded-xl [&_img]:my-4 [&_img]:w-full [&_img]:max-h-80 [&_img]:object-cover [&_img]:shadow-lg">
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
-                    </div>
+                    <>
+                      <div className="prose prose-sm prose-invert max-w-none [&_img]:rounded-xl [&_img]:my-4 [&_img]:w-full [&_img]:max-h-80 [&_img]:object-cover [&_img]:shadow-lg">
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
+                      {!isStreaming && msg.content.length > 100 && (
+                        <button
+                          onClick={() => useAsDraft(msg.content)}
+                          className="mt-2 flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors font-medium"
+                        >
+                          <FileText className="h-3.5 w-3.5" />
+                          Use as Draft → Edit & Publish
+                        </button>
+                      )}
+                    </>
                   ) : msg.content}
                 </div>
               ))}
