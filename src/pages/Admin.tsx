@@ -88,8 +88,14 @@ const Admin = () => {
   const [broadcastMsg, setBroadcastMsg] = useState('');
   const [broadcasting, setBroadcasting] = useState(false);
 
-  // Feed settings state
-  const [feedEnabled, setFeedEnabled] = useState(false);
+  // AI Draft Editor state
+  const [draftContent, setDraftContent] = useState('');
+  const [draftTitle, setDraftTitle] = useState('');
+  const [draftCategory, setDraftCategory] = useState('News');
+  const [draftTags, setDraftTags] = useState('AI, trending');
+  const [showDraftEditor, setShowDraftEditor] = useState(false);
+  const [draftPreview, setDraftPreview] = useState(false);
+  const [publishingDraft, setPublishingDraft] = useState(false);
   const [feedUrl, setFeedUrl] = useState('');
   const [feedSaving, setFeedSaving] = useState(false);
   const [showSecurity, setShowSecurity] = useState(false);
