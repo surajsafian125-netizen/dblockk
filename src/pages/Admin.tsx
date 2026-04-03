@@ -550,6 +550,79 @@ const Admin = () => {
     }
   };
 
+  // Extract title from Markdown content (first H1)
+  const extractTitleFromMarkdown = (md: string): string => {
+    const match = md.match(/^#\s+(.+)$/m);
+    return match ? match[1].trim() : '';
+  };
+
+  // Extract first image URL from Markdown
+  const extractImageFromMarkdown = (md: string): string => {
+    const match = md.match(/!\[.*?\]\((https?:\/\/[^\s)]+)\)/);
+    return match ? match[1] : '';
+  };
+
+  const useAsDraft = (content: string) => {
+    const title = extractTitleFromMarkdown(content);
+    setDraftTitle(title);
+    setDraftContent(content);
+    setShowDraftEditor(true);
+    setDraftPreview(false);
+    toast.success('Article loaded into draft editor!');
+  };
+
+  const publishDraft = async () => {
+    if (!draftContent.trim() || !draftTitle.trim()) {
+      toast.error('Title and content are required');
+      return;
+    }
+    setPublishingDraft(true);
+    try {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) {
+        toast.error('Not authenticated');
+        setPublishingDraft(false);
+        return;
+      }
+
+      const tags = draftTags.split(',').map(t => t.trim()).filter(Boolean);
+      const imageUrl = extractImageFromMarkdown(draftContent);
+      const readingTime = Math.max(1, Math.ceil(draftContent.split(/\s+/).length / 200));
+      // Strip the H1 title line from content body to avoid duplication
+      const bodyContent = draftContent.replace(/^#\s+.+\n*/m, '').trim();
+
+      const { error } = await supabase.from('posts').insert({
+        title: draftTitle,
+        content: bodyContent,
+        description: bodyContent.replace(/[#*!\[\]()]/g, '').slice(0, 120),
+        category: draftCategory,
+        tags,
+        image_url: imageUrl || null,
+        user_id: userData.user.id,
+        published: true,
+        views: 0,
+        likes_count: 0,
+        engagement_score: 0,
+        reading_time: readingTime,
+        is_trending: false,
+      });
+
+      if (error) {
+        toast.error(formatSupabaseError(error));
+        console.error('[Publish Draft] Insert error:', error);
+      } else {
+        toast.success('Article published to the live feed! 🚀');
+        setShowDraftEditor(false);
+        setDraftContent('');
+        setDraftTitle('');
+        fetchPosts();
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Publish failed');
+    }
+    setPublishingDraft(false);
+  };
+
   return (
     <div className="min-h-screen gradient-bg relative">
       <ParticleBackground />
