@@ -894,7 +894,93 @@ const Admin = () => {
           </div>
         </motion.div>
 
-        {showForm && (
+        {/* AI Draft Editor */}
+        {showDraftEditor && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass glow rounded-2xl p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display text-lg font-semibold flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" /> AI Draft Editor
+              </h2>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setDraftPreview(!draftPreview)}
+                  className="glass rounded-lg px-3 py-1.5 text-xs font-medium glass-hover transition-all"
+                >
+                  {draftPreview ? 'Edit' : 'Preview'}
+                </button>
+                <button onClick={() => setShowDraftEditor(false)} className="p-1 hover:bg-secondary/50 rounded-lg">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {/* Title input */}
+              <input
+                value={draftTitle}
+                onChange={e => setDraftTitle(e.target.value)}
+                placeholder="Article title..."
+                className="w-full bg-secondary/30 rounded-xl px-4 py-3 text-base font-semibold focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground"
+              />
+
+              {/* Category + Tags row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-1">Category</label>
+                  <select
+                    value={draftCategory}
+                    onChange={e => setDraftCategory(e.target.value)}
+                    className="w-full bg-secondary/30 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
+                  >
+                    <option value="News">News</option>
+                    <option value="Hustle">Hustle</option>
+                    <option value="Vibes">Vibes</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-1">Tags (comma-separated)</label>
+                  <input
+                    value={draftTags}
+                    onChange={e => setDraftTags(e.target.value)}
+                    placeholder="AI, trending, tech"
+                    className="w-full bg-secondary/30 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground"
+                  />
+                </div>
+              </div>
+
+              {/* Editor / Preview toggle */}
+              {draftPreview ? (
+                <div className="bg-secondary/20 rounded-xl p-5 max-h-[500px] overflow-y-auto prose prose-sm prose-invert max-w-none [&_img]:rounded-xl [&_img]:my-4 [&_img]:w-full [&_img]:max-h-80 [&_img]:object-cover [&_img]:shadow-lg">
+                  <ReactMarkdown>{draftContent}</ReactMarkdown>
+                </div>
+              ) : (
+                <textarea
+                  value={draftContent}
+                  onChange={e => setDraftContent(e.target.value)}
+                  placeholder="Edit your AI-generated article here (Markdown supported)..."
+                  rows={16}
+                  className="w-full bg-secondary/30 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground resize-y leading-relaxed"
+                />
+              )}
+
+              {/* Publish button */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={publishDraft}
+                  disabled={publishingDraft || !draftTitle.trim() || !draftContent.trim()}
+                  className="bg-primary text-primary-foreground rounded-xl px-6 py-3 text-sm font-semibold hover:opacity-90 transition-all glow flex items-center gap-2 disabled:opacity-40"
+                >
+                  {publishingDraft ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  Publish to Feed 🚀
+                </button>
+                <span className="text-xs text-muted-foreground">
+                  This will publish the article to the live public feed immediately.
+                </span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass glow rounded-2xl p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display text-lg font-semibold">{editingPost ? 'Edit Post' : 'Create Post'}</h2>
