@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Trash2, Edit, Eye, EyeOff, Send, Bot, Plus, Save, X, Upload, BarChart3, Newspaper, Loader2, Megaphone, Rss, Users, CheckCircle2, Briefcase, Check, XCircle, Shield } from 'lucide-react';
+import { Trash2, Edit, Eye, EyeOff, Send, Bot, Plus, Save, X, Upload, BarChart3, Newspaper, Loader2, Megaphone, Rss, Users, CheckCircle2, Briefcase, Check, XCircle, Shield, FileText, Sparkles } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import Header from '@/components/Header';
 import SecurityTerminal from '@/components/SecurityTerminal';
@@ -88,6 +88,14 @@ const Admin = () => {
   const [broadcastMsg, setBroadcastMsg] = useState('');
   const [broadcasting, setBroadcasting] = useState(false);
 
+  // AI Draft Editor state
+  const [draftContent, setDraftContent] = useState('');
+  const [draftTitle, setDraftTitle] = useState('');
+  const [draftCategory, setDraftCategory] = useState('News');
+  const [draftTags, setDraftTags] = useState('AI, trending');
+  const [showDraftEditor, setShowDraftEditor] = useState(false);
+  const [draftPreview, setDraftPreview] = useState(false);
+  const [publishingDraft, setPublishingDraft] = useState(false);
   // Feed settings state
   const [feedEnabled, setFeedEnabled] = useState(false);
   const [feedUrl, setFeedUrl] = useState('');
@@ -542,6 +550,79 @@ const Admin = () => {
     }
   };
 
+  // Extract title from Markdown content (first H1)
+  const extractTitleFromMarkdown = (md: string): string => {
+    const match = md.match(/^#\s+(.+)$/m);
+    return match ? match[1].trim() : '';
+  };
+
+  // Extract first image URL from Markdown
+  const extractImageFromMarkdown = (md: string): string => {
+    const match = md.match(/!\[.*?\]\((https?:\/\/[^\s)]+)\)/);
+    return match ? match[1] : '';
+  };
+
+  const useAsDraft = (content: string) => {
+    const title = extractTitleFromMarkdown(content);
+    setDraftTitle(title);
+    setDraftContent(content);
+    setShowDraftEditor(true);
+    setDraftPreview(false);
+    toast.success('Article loaded into draft editor!');
+  };
+
+  const publishDraft = async () => {
+    if (!draftContent.trim() || !draftTitle.trim()) {
+      toast.error('Title and content are required');
+      return;
+    }
+    setPublishingDraft(true);
+    try {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) {
+        toast.error('Not authenticated');
+        setPublishingDraft(false);
+        return;
+      }
+
+      const tags = draftTags.split(',').map(t => t.trim()).filter(Boolean);
+      const imageUrl = extractImageFromMarkdown(draftContent);
+      const readingTime = Math.max(1, Math.ceil(draftContent.split(/\s+/).length / 200));
+      // Strip the H1 title line from content body to avoid duplication
+      const bodyContent = draftContent.replace(/^#\s+.+\n*/m, '').trim();
+
+      const { error } = await supabase.from('posts').insert({
+        title: draftTitle,
+        content: bodyContent,
+        description: bodyContent.replace(/[#*!\[\]()]/g, '').slice(0, 120),
+        category: draftCategory,
+        tags,
+        image_url: imageUrl || null,
+        user_id: userData.user.id,
+        published: true,
+        views: 0,
+        likes_count: 0,
+        engagement_score: 0,
+        reading_time: readingTime,
+        is_trending: false,
+      });
+
+      if (error) {
+        toast.error(formatSupabaseError(error));
+        console.error('[Publish Draft] Insert error:', error);
+      } else {
+        toast.success('Article published to the live feed! 🚀');
+        setShowDraftEditor(false);
+        setDraftContent('');
+        setDraftTitle('');
+        fetchPosts();
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Publish failed');
+    }
+    setPublishingDraft(false);
+  };
+
   return (
     <div className="min-h-screen gradient-bg relative">
       <ParticleBackground />
@@ -813,6 +894,93 @@ const Admin = () => {
           </div>
         </motion.div>
 
+        {/* AI Draft Editor */}
+        {showDraftEditor && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass glow rounded-2xl p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display text-lg font-semibold flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" /> AI Draft Editor
+              </h2>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setDraftPreview(!draftPreview)}
+                  className="glass rounded-lg px-3 py-1.5 text-xs font-medium glass-hover transition-all"
+                >
+                  {draftPreview ? 'Edit' : 'Preview'}
+                </button>
+                <button onClick={() => setShowDraftEditor(false)} className="p-1 hover:bg-secondary/50 rounded-lg">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {/* Title input */}
+              <input
+                value={draftTitle}
+                onChange={e => setDraftTitle(e.target.value)}
+                placeholder="Article title..."
+                className="w-full bg-secondary/30 rounded-xl px-4 py-3 text-base font-semibold focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground"
+              />
+
+              {/* Category + Tags row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-1">Category</label>
+                  <select
+                    value={draftCategory}
+                    onChange={e => setDraftCategory(e.target.value)}
+                    className="w-full bg-secondary/30 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
+                  >
+                    <option value="News">News</option>
+                    <option value="Hustle">Hustle</option>
+                    <option value="Vibes">Vibes</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-1">Tags (comma-separated)</label>
+                  <input
+                    value={draftTags}
+                    onChange={e => setDraftTags(e.target.value)}
+                    placeholder="AI, trending, tech"
+                    className="w-full bg-secondary/30 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground"
+                  />
+                </div>
+              </div>
+
+              {/* Editor / Preview toggle */}
+              {draftPreview ? (
+                <div className="bg-secondary/20 rounded-xl p-5 max-h-[500px] overflow-y-auto prose prose-sm prose-invert max-w-none [&_img]:rounded-xl [&_img]:my-4 [&_img]:w-full [&_img]:max-h-80 [&_img]:object-cover [&_img]:shadow-lg">
+                  <ReactMarkdown>{draftContent}</ReactMarkdown>
+                </div>
+              ) : (
+                <textarea
+                  value={draftContent}
+                  onChange={e => setDraftContent(e.target.value)}
+                  placeholder="Edit your AI-generated article here (Markdown supported)..."
+                  rows={16}
+                  className="w-full bg-secondary/30 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground resize-y leading-relaxed"
+                />
+              )}
+
+              {/* Publish button */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={publishDraft}
+                  disabled={publishingDraft || !draftTitle.trim() || !draftContent.trim()}
+                  className="bg-primary text-primary-foreground rounded-xl px-6 py-3 text-sm font-semibold hover:opacity-90 transition-all glow flex items-center gap-2 disabled:opacity-40"
+                >
+                  {publishingDraft ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  Publish to Feed 🚀
+                </button>
+                <span className="text-xs text-muted-foreground">
+                  This will publish the article to the live public feed immediately.
+                </span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {showForm && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass glow rounded-2xl p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
@@ -906,12 +1074,23 @@ const Admin = () => {
               {chatHistory.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-8">Ask me anything about your content...</p>
               )}
-              {chatHistory.map((msg, i) => (
+               {chatHistory.map((msg, i) => (
                 <div key={i} className={`text-sm p-3 rounded-xl ${msg.role === 'user' ? 'bg-primary/10 ml-4' : 'bg-secondary/50 mr-4'}`}>
                   {msg.role === 'assistant' ? (
-                    <div className="prose prose-sm prose-invert max-w-none [&_img]:rounded-xl [&_img]:my-4 [&_img]:w-full [&_img]:max-h-80 [&_img]:object-cover [&_img]:shadow-lg">
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
-                    </div>
+                    <>
+                      <div className="prose prose-sm prose-invert max-w-none [&_img]:rounded-xl [&_img]:my-4 [&_img]:w-full [&_img]:max-h-80 [&_img]:object-cover [&_img]:shadow-lg">
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
+                      {!isStreaming && msg.content.length > 100 && (
+                        <button
+                          onClick={() => useAsDraft(msg.content)}
+                          className="mt-2 flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors font-medium"
+                        >
+                          <FileText className="h-3.5 w-3.5" />
+                          Use as Draft → Edit & Publish
+                        </button>
+                      )}
+                    </>
                   ) : msg.content}
                 </div>
               ))}
