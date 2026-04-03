@@ -41,7 +41,7 @@ const Header = () => {
           <Link to="/" className="font-display text-xl font-bold">
             <span className="text-primary text-glow">D'Block</span>
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
             <Link to="/hustle-board" className="text-sm text-muted-foreground hover:text-primary transition-colors hidden sm:inline">
               Hustle Board
             </Link>
