@@ -138,7 +138,7 @@ const DailyTechLaunches = () => {
               viewport={{ once: true }}
               transition={{ delay: i * 0.06 }}
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className="min-w-[220px] max-w-[220px] glass glass-hover rounded-xl overflow-hidden group block shrink-0 border border-border/20"
+              className="min-w-[180px] max-w-[220px] glass glass-hover rounded-xl overflow-hidden group block shrink-0 border border-border/20"
             >
               {/* Image */}
               <div className="relative h-28 overflow-hidden">

@@ -98,10 +98,10 @@ const PodcastCreatorChart = () => {
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={240}>
-          <BarChart data={data} layout="vertical" margin={{ left: 10 }}>
+          <BarChart data={data} layout="vertical" margin={{ left: 0, right: 10 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 20%)" horizontal={false} />
             <XAxis type="number" stroke="hsl(215, 15%, 55%)" fontSize={10} unit="%" />
-            <YAxis type="category" dataKey="name" stroke="hsl(215, 15%, 55%)" fontSize={11} width={120} />
+            <YAxis type="category" dataKey="name" stroke="hsl(215, 15%, 55%)" fontSize={10} width={80} tick={{ width: 75 }} />
             <Tooltip
               contentStyle={{ background: 'hsl(220, 25%, 10%)', border: '1px solid hsl(190, 95%, 55%, 0.2)', borderRadius: '12px', color: 'hsl(210, 20%, 95%)' }}
               formatter={(v: number) => [`${v}%`, 'Popularity']}

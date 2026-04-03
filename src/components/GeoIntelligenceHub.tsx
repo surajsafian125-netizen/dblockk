@@ -173,17 +173,17 @@ const GeoIntelligenceHub = () => {
             className="glass glow rounded-2xl p-6 mb-6"
           >
             {/* Location badge */}
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-primary" />
-                <span className="font-display font-semibold text-base">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-5">
+              <div className="flex items-center gap-2 flex-wrap min-w-0">
+                <MapPin className="h-4 w-4 text-primary shrink-0" />
+                <span className="font-display font-semibold text-base break-words">
                   {geo.city}, {geo.country}
                 </span>
-                <span className="text-[10px] bg-primary/15 text-primary rounded-full px-2 py-0.5 font-medium flex items-center gap-1">
+                <span className="text-[10px] bg-primary/15 text-primary rounded-full px-2 py-0.5 font-medium flex items-center gap-1 shrink-0">
                   <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" /> Live
                 </span>
               </div>
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-[11px] text-muted-foreground shrink-0">
                 {geo.lat.toFixed(2)}°, {geo.lon.toFixed(2)}°
               </span>
             </div>
