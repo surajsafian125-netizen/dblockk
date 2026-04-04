@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Bookmark } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import ThemeToggle from './ThemeToggle';
 import AuthModal from './AuthModal';
@@ -45,6 +46,12 @@ const Header = () => {
             <Link to="/hustle-board" className="text-sm text-muted-foreground hover:text-primary transition-colors hidden sm:inline">
               Hustle Board
             </Link>
+            {isAuthenticated && (
+              <Link to="/pulse" className="text-sm text-muted-foreground hover:text-primary transition-colors hidden sm:inline flex items-center gap-1">
+                <Activity className="h-3.5 w-3.5" />
+                Pulse Hub
+              </Link>
+            )}
             <ThemeToggle />
             {isAuthenticated ? (
               <>
