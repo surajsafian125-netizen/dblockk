@@ -94,7 +94,7 @@ const Admin = () => {
   const [draftCategory, setDraftCategory] = useState('News');
   const [draftTags, setDraftTags] = useState('AI, trending');
   const [showDraftEditor, setShowDraftEditor] = useState(false);
-    const [publishingDraft, setPublishingDraft] = useState(false);
+  const [publishingDraft, setPublishingDraft] = useState(false);
   // Feed settings state
   const [feedEnabled, setFeedEnabled] = useState(false);
   const [feedUrl, setFeedUrl] = useState('');
