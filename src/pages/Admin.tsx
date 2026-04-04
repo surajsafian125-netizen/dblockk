@@ -89,13 +89,12 @@ const Admin = () => {
   const [broadcasting, setBroadcasting] = useState(false);
 
   // AI Draft Editor state
-  const [draftContent, setDraftContent] = useState('');
+  const [draft, setDraft] = useState('');
   const [draftTitle, setDraftTitle] = useState('');
   const [draftCategory, setDraftCategory] = useState('News');
   const [draftTags, setDraftTags] = useState('AI, trending');
   const [showDraftEditor, setShowDraftEditor] = useState(false);
-  const [draftPreview, setDraftPreview] = useState(false);
-  const [publishingDraft, setPublishingDraft] = useState(false);
+    const [publishingDraft, setPublishingDraft] = useState(false);
   // Feed settings state
   const [feedEnabled, setFeedEnabled] = useState(false);
   const [feedUrl, setFeedUrl] = useState('');
@@ -519,10 +518,13 @@ const Admin = () => {
     setChatHistory(prev => [...prev, userMsg]);
     setChatMessage('');
     setIsStreaming(true);
+    setShowDraftEditor(true);
+    setDraft('');
 
     let assistantSoFar = '';
     const upsertAssistant = (chunk: string) => {
       assistantSoFar += chunk;
+      updateDraft(assistantSoFar);
       setChatHistory(prev => {
         const last = prev[prev.length - 1];
         if (last?.role === 'assistant') {
@@ -562,17 +564,23 @@ const Admin = () => {
     return match ? match[1] : '';
   };
 
+  const updateDraft = (nextDraft: string) => {
+    setDraft(nextDraft);
+    const title = extractTitleFromMarkdown(nextDraft);
+    if (title) setDraftTitle(title);
+  };
+
   const useAsDraft = (content: string) => {
-    const title = extractTitleFromMarkdown(content);
-    setDraftTitle(title);
-    setDraftContent(content);
+    updateDraft(content);
     setShowDraftEditor(true);
-    setDraftPreview(false);
     toast.success('Article loaded into draft editor!');
   };
 
   const publishDraft = async () => {
-    if (!draftContent.trim() || !draftTitle.trim()) {
+    const finalDraft = draft.trim();
+    const finalTitle = extractTitleFromMarkdown(finalDraft) || draftTitle.trim();
+
+    if (!finalDraft || !finalTitle) {
       toast.error('Title and content are required');
       return;
     }
@@ -586,13 +594,12 @@ const Admin = () => {
       }
 
       const tags = draftTags.split(',').map(t => t.trim()).filter(Boolean);
-      const imageUrl = extractImageFromMarkdown(draftContent);
-      const readingTime = Math.max(1, Math.ceil(draftContent.split(/\s+/).length / 200));
-      // Strip the H1 title line from content body to avoid duplication
-      const bodyContent = draftContent.replace(/^#\s+.+\n*/m, '').trim();
+      const imageUrl = extractImageFromMarkdown(finalDraft);
+      const readingTime = Math.max(1, Math.ceil(finalDraft.split(/\s+/).length / 200));
+      const bodyContent = finalDraft.replace(/^#\s+.+\n*/m, '').trim();
 
       const { error } = await supabase.from('posts').insert({
-        title: draftTitle,
+        title: finalTitle,
         content: bodyContent,
         description: bodyContent.replace(/[#*!\[\]()]/g, '').slice(0, 120),
         category: draftCategory,
@@ -613,7 +620,7 @@ const Admin = () => {
       } else {
         toast.success('Article published to the live feed! 🚀');
         setShowDraftEditor(false);
-        setDraftContent('');
+        setDraft('');
         setDraftTitle('');
         fetchPosts();
       }
@@ -901,17 +908,9 @@ const Admin = () => {
               <h2 className="font-display text-lg font-semibold flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary" /> AI Draft Editor
               </h2>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setDraftPreview(!draftPreview)}
-                  className="glass rounded-lg px-3 py-1.5 text-xs font-medium glass-hover transition-all"
-                >
-                  {draftPreview ? 'Edit' : 'Preview'}
-                </button>
-                <button onClick={() => setShowDraftEditor(false)} className="p-1 hover:bg-secondary/50 rounded-lg">
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
+              <button onClick={() => setShowDraftEditor(false)} className="p-1 hover:bg-secondary/50 rounded-lg">
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
             <div className="space-y-4">
@@ -948,26 +947,23 @@ const Admin = () => {
                 </div>
               </div>
 
-              {/* Editor / Preview toggle */}
-              {draftPreview ? (
-                <div className="bg-secondary/20 rounded-xl p-5 max-h-[500px] overflow-y-auto prose prose-sm prose-invert max-w-none [&_img]:rounded-xl [&_img]:my-4 [&_img]:w-full [&_img]:max-h-80 [&_img]:object-cover [&_img]:shadow-lg">
-                  <ReactMarkdown>{draftContent}</ReactMarkdown>
-                </div>
-              ) : (
-                <textarea
-                  value={draftContent}
-                  onChange={e => setDraftContent(e.target.value)}
-                  placeholder="Edit your AI-generated article here (Markdown supported)..."
-                  rows={16}
-                  className="w-full bg-secondary/30 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground resize-y leading-relaxed"
-                />
-              )}
+              <textarea
+                value={draft}
+                onChange={e => updateDraft(e.target.value)}
+                placeholder="Edit your AI-generated article here (Markdown supported)..."
+                rows={16}
+                className="w-full bg-secondary/30 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground resize-y leading-relaxed"
+              />
+
+              <div className="bg-secondary/20 rounded-xl p-5 max-h-[500px] overflow-y-auto prose prose-sm prose-invert max-w-none [&_img]:rounded-xl [&_img]:my-4 [&_img]:w-full [&_img]:max-h-80 [&_img]:object-cover [&_img]:shadow-lg">
+                <ReactMarkdown>{draft}</ReactMarkdown>
+              </div>
 
               {/* Publish button */}
               <div className="flex items-center gap-3">
                 <button
                   onClick={publishDraft}
-                  disabled={publishingDraft || !draftTitle.trim() || !draftContent.trim()}
+                  disabled={publishingDraft || !draft.trim()}
                   className="bg-primary text-primary-foreground rounded-xl px-6 py-3 text-sm font-semibold hover:opacity-90 transition-all glow flex items-center gap-2 disabled:opacity-40"
                 >
                   {publishingDraft ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
