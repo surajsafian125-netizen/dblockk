@@ -59,7 +59,8 @@ const ContentGrid = () => {
       const { data, error } = await supabase
         .from('posts')
         .select('*')
-        .eq('published', true);
+        .eq('published', true)
+        .order('created_at', { ascending: false });
       
       if (error) {
         console.error('Error fetching posts:', error);

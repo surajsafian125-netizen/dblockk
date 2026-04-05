@@ -1044,7 +1044,7 @@ const Admin = () => {
               >
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium truncate">{post.title}</h3>
-                  <p className="text-xs text-muted-foreground">{post.category} · {(post.views || 0).toLocaleString()} views</p>
+                  <p className="text-xs text-muted-foreground">{post.category} · {post.created_at ? new Date(post.created_at).toLocaleDateString() : 'No date'} · {(post.views || 0).toLocaleString()} views</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => togglePublish(post)} className="p-2 rounded-lg hover:bg-secondary/50 transition-colors">
