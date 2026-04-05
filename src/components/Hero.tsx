@@ -18,12 +18,12 @@ const Hero = () => {
         className="text-center max-w-4xl mx-auto"
       >
         <motion.h1
-          className="font-display text-5xl md:text-7xl font-bold mb-6 leading-tight"
+          className="font-display text-5xl md:text-7xl font-bold mb-6 leading-tight bg-gradient-to-r from-foreground via-primary to-accent bg-clip-text text-transparent"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.8 }}
         >
-          <span className="text-primary text-glow">D'Block</span>
+          Welcome to the Block.
         </motion.h1>
 
         <motion.p
@@ -32,7 +32,7 @@ const Hero = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.8 }}
         >
-          Ask. Discover. Elevate.
+          The definitive source for unfiltered news, industry launches, and the conversations shaping tomorrow.
         </motion.p>
 
         {isAuthenticated ? (
