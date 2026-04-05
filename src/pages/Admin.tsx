@@ -565,8 +565,9 @@ const Admin = () => {
   };
 
   const updateDraft = (nextDraft: string) => {
-    setDraft(nextDraft);
-    const title = extractTitleFromMarkdown(nextDraft);
+    const preservedDraft = nextDraft.replace(/\r\n/g, '\n');
+    setDraft(preservedDraft);
+    const title = extractTitleFromMarkdown(preservedDraft);
     if (title) setDraftTitle(title);
   };
 
