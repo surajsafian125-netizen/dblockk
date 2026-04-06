@@ -3,13 +3,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import Header from '@/components/Header';
+import ParticleBackground from '@/components/ParticleBackground';
+import Footer from '@/components/Footer';
+import BreakingNewsTicker from '@/components/pulse/BreakingNewsTicker';
+import CryptoTerminal from '@/components/pulse/CryptoTerminal';
+import GlobalHubs from '@/components/pulse/GlobalHubs';
 import MatchDay from '@/components/MatchDay';
 import GeoIntelligenceHub from '@/components/GeoIntelligenceHub';
 import GlobalTrends from '@/components/GlobalTrends';
 import DailyTechLaunches from '@/components/DailyTechLaunches';
 import TechCategoryGrowth from '@/components/TechCategoryGrowth';
-import ParticleBackground from '@/components/ParticleBackground';
-import Footer from '@/components/Footer';
 import { Activity } from 'lucide-react';
 
 const PulseDashboard = () => {
@@ -36,7 +39,13 @@ const PulseDashboard = () => {
     <div className="min-h-screen gradient-bg relative overflow-x-hidden">
       <ParticleBackground />
       <Header />
-      <div className="relative z-10 container mx-auto px-4 pt-24 pb-16">
+
+      {/* Breaking News Ticker — right below header */}
+      <div className="relative z-40 mt-16">
+        <BreakingNewsTicker />
+      </div>
+
+      <div className="relative z-10 container mx-auto px-4 pt-8 pb-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -49,9 +58,19 @@ const PulseDashboard = () => {
             </h1>
           </div>
           <p className="text-muted-foreground text-sm max-w-xl">
-            Live sports scores, weather intelligence, tech trends — all your real-time data widgets in one place.
+            Live sports scores, weather intelligence, crypto markets, tech trends — all your real-time data in one place.
           </p>
         </motion.div>
+
+        {/* Crypto Terminal */}
+        <section className="mb-10">
+          <CryptoTerminal />
+        </section>
+
+        {/* Global Hubs */}
+        <section className="mb-10">
+          <GlobalHubs />
+        </section>
 
         {/* Live Sports & Weather */}
         <section className="mb-10">

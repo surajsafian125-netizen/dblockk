@@ -159,6 +159,13 @@
   .marquee-track:hover {
     animation-play-state: paused;
   }
+  .breaking-ticker-track {
+    animation: marquee-scroll 40s linear infinite;
+    width: max-content;
+  }
+  .breaking-ticker-track:hover {
+    animation-play-state: paused;
+  }
 }
 
 @keyframes marquee-scroll {
