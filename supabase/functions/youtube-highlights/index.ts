@@ -12,10 +12,11 @@ serve(async (req) => {
   }
 
   try {
-    const API_KEY = Deno.env.get("VITE_YOUTUBE_API_KEY");
+    const API_KEY = Deno.env.get("YOUTUBE_API_KEY") ?? Deno.env.get("VITE_YOUTUBE_API_KEY");
     if (!API_KEY) {
+      console.error("YOUTUBE_API_KEY is not configured");
       return new Response(
-        JSON.stringify({ error: "VITE_YOUTUBE_API_KEY is not configured" }),
+        JSON.stringify({ error: "YouTube service is not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -40,7 +41,7 @@ serve(async (req) => {
       const errBody = await res.text();
       console.error("YouTube API error:", res.status, errBody);
       return new Response(
-        JSON.stringify({ error: `YouTube API error ${res.status}: ${errBody.slice(0, 300)}` }),
+        JSON.stringify({ error: "Unable to fetch YouTube highlights at this time" }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -62,7 +63,7 @@ serve(async (req) => {
   } catch (err) {
     console.error("youtube-highlights error:", err);
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),
+      JSON.stringify({ error: "An error occurred fetching highlights" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
