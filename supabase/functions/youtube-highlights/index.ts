@@ -12,10 +12,11 @@ serve(async (req) => {
   }
 
   try {
-    const API_KEY = Deno.env.get("VITE_YOUTUBE_API_KEY");
+    const API_KEY = Deno.env.get("YOUTUBE_API_KEY") ?? Deno.env.get("VITE_YOUTUBE_API_KEY");
     if (!API_KEY) {
+      console.error("YOUTUBE_API_KEY is not configured");
       return new Response(
-        JSON.stringify({ error: "VITE_YOUTUBE_API_KEY is not configured" }),
+        JSON.stringify({ error: "YouTube service is not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
