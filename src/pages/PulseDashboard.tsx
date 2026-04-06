@@ -8,6 +8,8 @@ import Footer from '@/components/Footer';
 import BreakingNewsTicker from '@/components/pulse/BreakingNewsTicker';
 import CryptoTerminal from '@/components/pulse/CryptoTerminal';
 import GlobalHubs from '@/components/pulse/GlobalHubs';
+import MatchDayRadar from '@/components/pulse/MatchDayRadar';
+import CosmicCommand from '@/components/pulse/CosmicCommand';
 import MatchDay from '@/components/MatchDay';
 import GeoIntelligenceHub from '@/components/GeoIntelligenceHub';
 import GlobalTrends from '@/components/GlobalTrends';
@@ -70,6 +72,19 @@ const PulseDashboard = () => {
         {/* Global Hubs */}
         <section className="mb-10">
           <GlobalHubs />
+        </section>
+
+        {/* Match Day Radar */}
+        <section className="mb-10">
+          <MatchDayRadar />
+        </section>
+
+        {/* Cosmic Command — NASA APOD */}
+        <section className="mb-10">
+          <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2">
+            🚀 Cosmic Command
+          </h2>
+          <CosmicCommand />
         </section>
 
         {/* Live Sports & Weather */}
