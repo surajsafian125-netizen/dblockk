@@ -41,7 +41,7 @@ serve(async (req) => {
       const errBody = await res.text();
       console.error("YouTube API error:", res.status, errBody);
       return new Response(
-        JSON.stringify({ error: `YouTube API error ${res.status}: ${errBody.slice(0, 300)}` }),
+        JSON.stringify({ error: "Unable to fetch YouTube highlights at this time" }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
