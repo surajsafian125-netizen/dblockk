@@ -8,6 +8,8 @@ import Footer from '@/components/Footer';
 import BreakingNewsTicker from '@/components/pulse/BreakingNewsTicker';
 import CryptoTerminal from '@/components/pulse/CryptoTerminal';
 import GlobalHubs from '@/components/pulse/GlobalHubs';
+import MatchDayRadar from '@/components/pulse/MatchDayRadar';
+import CosmicCommand from '@/components/pulse/CosmicCommand';
 import MatchDay from '@/components/MatchDay';
 import GeoIntelligenceHub from '@/components/GeoIntelligenceHub';
 import GlobalTrends from '@/components/GlobalTrends';
