@@ -74,6 +74,19 @@ const PulseDashboard = () => {
           <GlobalHubs />
         </section>
 
+        {/* Match Day Radar */}
+        <section className="mb-10">
+          <MatchDayRadar />
+        </section>
+
+        {/* Cosmic Command — NASA APOD */}
+        <section className="mb-10">
+          <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2">
+            🚀 Cosmic Command
+          </h2>
+          <CosmicCommand />
+        </section>
+
         {/* Live Sports & Weather */}
         <section className="mb-10">
           <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2">
