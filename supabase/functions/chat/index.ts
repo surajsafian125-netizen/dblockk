@@ -75,9 +75,9 @@ serve(async (req) => {
       });
     }
 
-    const DEEPSEEK_API_KEY = Deno.env.get("VITE_DEEPSEEK_API_KEY");
+    const DEEPSEEK_API_KEY = Deno.env.get("DEEPSEEK_API_KEY") ?? Deno.env.get("VITE_DEEPSEEK_API_KEY");
     if (!DEEPSEEK_API_KEY) {
-      console.error("VITE_DEEPSEEK_API_KEY is not configured");
+      console.error("DEEPSEEK_API_KEY is not configured");
       return new Response(JSON.stringify({ error: "AI service is not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

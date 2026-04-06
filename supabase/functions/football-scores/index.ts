@@ -95,7 +95,7 @@ serve(async (req) => {
   } catch (err) {
     console.error("football-scores error:", err);
     return new Response(
-      JSON.stringify({ matches: [], error: "Unable to fetch scores" }),
+      JSON.stringify({ matches: [], error: "Unable to fetch scores at this time" }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

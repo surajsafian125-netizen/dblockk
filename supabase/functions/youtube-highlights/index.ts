@@ -63,7 +63,7 @@ serve(async (req) => {
   } catch (err) {
     console.error("youtube-highlights error:", err);
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),
+      JSON.stringify({ error: "An error occurred fetching highlights" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
