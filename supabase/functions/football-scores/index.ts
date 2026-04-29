@@ -19,8 +19,13 @@ serve(async (req) => {
       throw new Error("FOOTBALL_API_KEY not configured");
     }
 
+    // Construct today as yyyy-mm-dd
     const today = new Date().toISOString().split("T")[0];
-    const url = `https://api.football-data.org/v4/matches?date=${today}`;
+
+    // Use football-data.org API with dateFrom, dateTo and status filters to fetch only today's live or finished matches for current season
+    // Status options: SCHEDULED, TIMED, IN_PLAY, PAUSED, FINISHED, SUSPENDED, POSTPONED, CANCELLED
+    // We want IN_PLAY and FINISHED
+    const url = `https://api.football-data.org/v4/matches?dateFrom=${today}&dateTo=${today}&status=IN_PLAY,FINISHED`;
 
     const res = await fetch(url, {
       headers: { "X-Auth-Token": apiKey },
