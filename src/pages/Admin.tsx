@@ -271,9 +271,21 @@ const Admin = () => {
     }
   };
 
-  const deletePost = async (id: string) => {
-    const { error } = await supabase.from('posts').delete().eq('id', id);
-    if (!error) setPosts(prev => prev.filter(p => p.id !== id));
+  const handleDelete = async (post: DBPost) => {
+    const confirmed = window.confirm(`Delete "${post.title}"? This action cannot be undone.`);
+    if (!confirmed) return;
+
+    const { error } = await supabase.from('posts').delete().eq('id', post.id);
+
+    if (error) {
+      const fullError = formatSupabaseError(error) || 'Delete failed';
+      toast.error(fullError);
+      console.error('[Delete Post] Delete error:', error);
+      return;
+    }
+
+    setPosts(prev => prev.filter(p => p.id !== post.id));
+    toast.success('Post deleted');
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1054,7 +1066,7 @@ const Admin = () => {
                   <button onClick={() => openEditForm(post)} className="p-2 rounded-lg hover:bg-secondary/50 transition-colors">
                     <Edit className="h-4 w-4 text-muted-foreground" />
                   </button>
-                  <button onClick={() => deletePost(post.id)} className="p-2 rounded-lg hover:bg-destructive/20 transition-colors">
+                  <button onClick={() => handleDelete(post)} className="p-2 rounded-lg hover:bg-destructive/20 transition-colors">
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </button>
                 </div>
