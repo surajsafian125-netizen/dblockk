@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import type { User } from '@supabase/supabase-js';
+import type { User, Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
   user: User | null;
@@ -25,44 +25,87 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const checkAdmin = async (userId: string) => {
-    const { data } = await supabase.rpc('has_role', { _user_id: userId, _role: 'admin' });
-    setIsAdmin(!!data);
-  };
+  // Refs to prevent duplicate work / stale state across re-renders
+  const mountedRef = useRef(true);
+  const lastUserIdRef = useRef<string | null>(null);
+  const adminCheckTokenRef = useRef(0);
 
   useEffect(() => {
-    // Set up auth listener BEFORE checking session
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setIsLoading(false);
+    mountedRef.current = true;
 
-      if (session?.user) {
-        // Defer admin check to avoid Supabase client deadlock
-        setTimeout(() => checkAdmin(session.user.id), 0);
-      } else {
+    const applySession = (session: Session | null, { initial = false } = {}) => {
+      if (!mountedRef.current) return;
+      const nextUser = session?.user ?? null;
+      const nextUserId = nextUser?.id ?? null;
+      const userChanged = nextUserId !== lastUserIdRef.current;
+
+      setUser(nextUser);
+
+      if (!nextUser) {
+        // Wipe all derived state immediately on sign-out / session loss
+        lastUserIdRef.current = null;
         setIsAdmin(false);
+        adminCheckTokenRef.current++; // invalidate any in-flight admin check
+        if (initial) setIsLoading(false);
+        return;
       }
-    });
 
-    // Then check existing session
+      if (userChanged) {
+        lastUserIdRef.current = nextUserId;
+        const token = ++adminCheckTokenRef.current;
+        // Defer to avoid Supabase client deadlock inside auth callback
+        setTimeout(async () => {
+          try {
+            const { data } = await supabase.rpc('has_role', {
+              _user_id: nextUser.id,
+              _role: 'admin',
+            });
+            if (!mountedRef.current) return;
+            if (token !== adminCheckTokenRef.current) return; // stale
+            setIsAdmin(!!data);
+          } catch {
+            if (mountedRef.current && token === adminCheckTokenRef.current) {
+              setIsAdmin(false);
+            }
+          } finally {
+            if (mountedRef.current && initial) setIsLoading(false);
+          }
+        }, 0);
+      } else if (initial) {
+        setIsLoading(false);
+      }
+    };
+
+    // 1. Singleton listener — set up BEFORE getSession
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'SIGNED_OUT') {
+          applySession(null);
+        } else {
+          applySession(session);
+        }
+      }
+    );
+
+    // 2. Restore initial session from storage
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-      if (session?.user) {
-        checkAdmin(session.user.id);
-      }
+      applySession(session, { initial: true });
     });
 
-    return () => subscription.unsubscribe();
+    // 3. Strict cleanup
+    return () => {
+      mountedRef.current = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const login = async (email: string, password: string): Promise<{ error?: string }> => {
+  const login = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { error: error.message };
     return {};
   };
 
-  const signup = async (name: string, email: string, password: string): Promise<{ error?: string }> => {
+  const signup = async (name: string, email: string, password: string) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -76,9 +119,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    // Clear local state first to prevent any guarded UI from re-firing
+    lastUserIdRef.current = null;
+    adminCheckTokenRef.current++;
     setUser(null);
     setIsAdmin(false);
+    await supabase.auth.signOut();
   };
 
   return (
