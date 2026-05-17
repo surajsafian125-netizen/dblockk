@@ -288,6 +288,23 @@ const Admin = () => {
     toast.success('Post deleted');
   };
 
+  const handleDeleteAll = async () => {
+    const confirmed = window.confirm('Are you sure you want to permanently delete all articles? This cannot be undone.');
+    if (!confirmed) return;
+
+    const { error } = await supabase.from('posts').delete().not('id', 'is', null);
+
+    if (error) {
+      const fullError = formatSupabaseError(error) || 'Delete all failed';
+      toast.error(fullError);
+      console.error('[Delete All Posts] Error:', error);
+      return;
+    }
+
+    setPosts([]);
+    toast.success('All articles deleted');
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
