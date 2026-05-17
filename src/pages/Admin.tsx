@@ -1059,8 +1059,8 @@ const Admin = () => {
                   <h3 className="font-medium truncate">{post.title}</h3>
                   <p className="text-xs text-muted-foreground">{post.category} · {post.created_at ? new Date(post.created_at).toLocaleDateString() : 'No date'} · {(post.views || 0).toLocaleString()} views</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => togglePublish(post)} className="p-2 rounded-lg hover:bg-secondary/50 transition-colors">
+                <div className="flex items-center gap-2 shrink-0">
+                  <button onClick={() => togglePublish(post)} className="p-2 rounded-lg hover:bg-secondary/50 transition-colors" title="Toggle publish">
                     {post.published ? <Eye className="h-4 w-4 text-primary" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
                   </button>
                   <button onClick={() => openEditForm(post)} className="p-2 rounded-lg hover:bg-secondary/50 transition-colors">
