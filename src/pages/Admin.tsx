@@ -288,6 +288,23 @@ const Admin = () => {
     toast.success('Post deleted');
   };
 
+  const handleDeleteAll = async () => {
+    const confirmed = window.confirm('Are you sure you want to permanently delete all articles? This cannot be undone.');
+    if (!confirmed) return;
+
+    const { error } = await supabase.from('posts').delete().not('id', 'is', null);
+
+    if (error) {
+      const fullError = formatSupabaseError(error) || 'Delete all failed';
+      toast.error(fullError);
+      console.error('[Delete All Posts] Error:', error);
+      return;
+    }
+
+    setPosts([]);
+    toast.success('All articles deleted');
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -660,6 +677,9 @@ const Admin = () => {
         <div className="flex gap-3 mb-6 flex-wrap">
           <button onClick={() => { resetForm(); setShowForm(true); }} className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm font-medium hover:opacity-90 transition-all glow flex items-center gap-2">
             <Plus className="h-4 w-4" /> Create Post
+          </button>
+          <button onClick={handleDeleteAll} className="border border-destructive/40 text-destructive bg-destructive/5 hover:bg-destructive/15 rounded-xl px-4 py-2 text-sm font-medium transition-all flex items-center gap-2">
+            <Trash2 className="h-4 w-4" /> Delete All Articles
           </button>
           <button onClick={importNews} disabled={importing} className="bg-accent text-accent-foreground rounded-xl px-4 py-2 text-sm font-medium hover:opacity-90 transition-all flex items-center gap-2 disabled:opacity-50">
             {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Newspaper className="h-4 w-4" />}
