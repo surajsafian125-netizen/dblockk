@@ -497,28 +497,63 @@ const Admin = () => {
         return;
       }
 
-      const rows = allArticles.map((a) => ({
-        title: a.title,
-        content: a.description || a.title,
-        description: a.description.slice(0, 120) || null,
-        category: 'News',
-        image_url: a.image || null,
-        tags: ['imported', 'global-news'],
-        user_id: userData.user.id,
-        published: true,
-        views: 0,
-        likes_count: 0,
-        engagement_score: 0,
-        reading_time: 2,
-        is_trending: false,
-      }));
+      toast.info(`Formatting ${allArticles.length} articles with AI...`);
+
+      // Pass each raw article through the AI chat function so it gets
+      // restructured into the strict 4-section markdown layout enforced
+      // by the chat edge function's system prompt.
+      const formatArticle = async (a: { title: string; description: string; link: string }): Promise<string> => {
+        const prompt = `Rewrite and restructure the following news article into a dense, rich editorial piece using the required four-section Markdown layout (## The Hook, ## Introduction, ## The Deep Dive, ## The Takeaway). Use ONLY the facts provided — do not invent details.\n\nTITLE: ${a.title}\n\nSOURCE URL: ${a.link}\n\nRAW CONTENT:\n${a.description || a.title}`;
+        let out = '';
+        try {
+          await streamChat({
+            messages: [{ role: 'user', content: prompt }] as Msg[],
+            onDelta: (d) => { out += d; },
+            onDone: () => {},
+          });
+        } catch (err) {
+          console.error('[Import News] AI format failed for:', a.title, err);
+        }
+        return out.trim();
+      };
+
+      const formattedContents: string[] = [];
+      for (const a of allArticles) {
+        const md = await formatArticle(a);
+        formattedContents.push(md);
+      }
+
+      const rows = allArticles
+        .map((a, i) => ({ a, content: formattedContents[i] }))
+        .filter(({ content }) => content && content.length > 100)
+        .map(({ a, content }) => ({
+          title: a.title,
+          content,
+          description: a.description.slice(0, 120) || null,
+          category: 'News',
+          image_url: a.image || null,
+          tags: ['imported', 'global-news'],
+          user_id: userData.user.id,
+          published: true,
+          views: 0,
+          likes_count: 0,
+          engagement_score: 0,
+          reading_time: 4,
+          is_trending: false,
+        }));
+
+      if (rows.length === 0) {
+        toast.error('AI formatting failed for all articles');
+        setImporting(false);
+        return;
+      }
 
       const { error } = await supabase.from('posts').insert(rows);
       if (error) {
         toast.error(formatSupabaseError(error));
         console.error('[Import News] Insert error:', error);
       } else {
-        toast.success(`Imported ${rows.length} articles!`);
+        toast.success(`Imported & formatted ${rows.length} articles!`);
         fetchPosts();
       }
     } catch (e: any) {
