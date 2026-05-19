@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Eye, Heart, Clock, TrendingUp, MessageCircle, Send, Bookmark, Share2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
+import StructuredArticle from './StructuredArticle';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { sharePost } from '@/lib/shareUtils';
@@ -139,22 +139,8 @@ const PostDetailModal = ({
                 <span className="flex items-center gap-1 text-primary"><TrendingUp className="h-3 w-3" /> {post.engagementScore}%</span>
               </div>
 
-              <div className="mb-6 prose prose-sm max-w-none dark:prose-invert prose-headings:font-display prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-a:text-primary prose-img:rounded-xl prose-img:shadow-lg prose-img:w-full">
-                <ReactMarkdown
-                  components={{
-                    img: ({ alt, ...props }) => (
-                      <img
-                        {...props}
-                        alt={alt || post.title}
-                        loading="lazy"
-                        className="w-full rounded-xl object-cover shadow-lg"
-                      />
-                    ),
-                  }}
-                >
-                  {post.content || post.description}
-                </ReactMarkdown>
-              </div>
+              <StructuredArticle content={post.content || post.description} title={post.title} />
+
 
               <div className="flex items-center gap-3 mb-6 pb-6 border-b border-border/40">
                 <motion.button
