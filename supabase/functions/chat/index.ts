@@ -107,11 +107,18 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errBody = await response.text();
-      console.error("DeepSeek API error:", response.status, errBody);
+      console.error("Lovable AI Gateway error:", response.status, errBody);
 
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "AI service is busy. Try again shortly." }), {
           status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits in Settings → Workspace → Usage." }), {
+          status: 402,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
