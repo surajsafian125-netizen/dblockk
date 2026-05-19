@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Eye, Heart, Clock, TrendingUp, MessageCircle, Send, Bookmark, Share2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
+import StructuredArticle from './StructuredArticle';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { sharePost } from '@/lib/shareUtils';
