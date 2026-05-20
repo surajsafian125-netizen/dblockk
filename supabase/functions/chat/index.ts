@@ -165,8 +165,9 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (e) {
-    console.error("chat error:", e);
-    return new Response(JSON.stringify({ error: "An error occurred processing your request" }), {
+    const message = e instanceof Error ? e.message : String(e);
+    console.error("chat error:", message, e);
+    return new Response(JSON.stringify({ error: `Chat function error: ${message}` }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
