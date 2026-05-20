@@ -122,9 +122,6 @@ Deno.serve(async (req) => {
       return jsonResponse("Missing article text", STATUS_CODE.BadRequest);
     }
 
-    const geminiUrl =
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
     const geminiPayload = {
       systemInstruction: {
         parts: [{ text: systemPrompt }],
@@ -143,11 +140,26 @@ Deno.serve(async (req) => {
 
     let geminiResponse: Response;
     try {
-      geminiResponse = await fetch(geminiUrl, {
+      const primaryUrl =
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      const fallbackUrl =
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+      geminiResponse = await fetch(primaryUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(geminiPayload),
       });
+
+      if (geminiResponse.status === STATUS_CODE.NotFound) {
+        const primaryError = await geminiResponse.text().catch(() => "");
+        console.error("Gemini 1.5 Flash unavailable, retrying Gemini 2.0 Flash:", primaryError);
+        geminiResponse = await fetch(fallbackUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(geminiPayload),
+        });
+      }
     } catch (error) {
       console.error("Gemini fetch failed:", error);
       return jsonResponse("Failed to reach Gemini API", STATUS_CODE.BadGateway);
