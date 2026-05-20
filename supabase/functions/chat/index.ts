@@ -96,9 +96,9 @@ serve(async (req) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          systemInstruction: { role: "system", parts: [{ text: SYSTEM_PROMPT }] },
+          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
           contents,
-          generationConfig: { temperature: 0.7, maxOutputTokens: 4096 },
+          generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
         }),
       });
     } catch (fetchErr) {
@@ -165,8 +165,9 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (e) {
-    console.error("chat error:", e);
-    return new Response(JSON.stringify({ error: "An error occurred processing your request" }), {
+    const message = e instanceof Error ? e.message : String(e);
+    console.error("chat error:", message, e);
+    return new Response(JSON.stringify({ error: `Chat function error: ${message}` }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
