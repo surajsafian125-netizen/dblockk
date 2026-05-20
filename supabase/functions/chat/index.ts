@@ -96,9 +96,9 @@ serve(async (req) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          systemInstruction: { role: "system", parts: [{ text: SYSTEM_PROMPT }] },
+          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
           contents,
-          generationConfig: { temperature: 0.7, maxOutputTokens: 4096 },
+          generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
         }),
       });
     } catch (fetchErr) {
