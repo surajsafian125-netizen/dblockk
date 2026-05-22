@@ -1,6 +1,7 @@
 export type Msg = { role: "user" | "assistant"; content: string };
 
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
