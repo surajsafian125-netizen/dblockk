@@ -85,6 +85,7 @@ const Admin = () => {
   const [uploading, setUploading] = useState(false);
   const [postSubmitError, setPostSubmitError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(null);
   const [broadcastMsg, setBroadcastMsg] = useState('');
   const [broadcasting, setBroadcasting] = useState(false);
 
