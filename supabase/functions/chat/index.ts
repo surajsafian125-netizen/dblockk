@@ -138,39 +138,63 @@ Deno.serve(async (req) => {
       },
     };
 
-    let geminiResponse: Response;
-    try {
-      const primaryUrl =
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-      const fallbackUrl =
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    // Primary: gemini-2.0-flash (higher free quota). Fallback: gemini-1.5-flash.
+    const primaryUrl =
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const fallbackUrl =
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
-      geminiResponse = await fetch(primaryUrl, {
+    const callGemini = (url: string) =>
+      fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(geminiPayload),
       });
 
-      if (geminiResponse.status === STATUS_CODE.NotFound) {
-        const primaryError = await geminiResponse.text().catch(() => "");
-        console.error("Gemini 1.5 Flash unavailable, retrying Gemini 2.0 Flash:", primaryError);
-        geminiResponse = await fetch(fallbackUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(geminiPayload),
-        });
+    // Exponential backoff on 429. Total worst-case wait: 1+2+4 = 7s, well under edge timeout.
+    const backoffsMs = [1000, 2000, 4000];
+    let geminiResponse: Response | null = null;
+    let lastErrorBody = "";
+
+    try {
+      for (let attempt = 0; attempt <= backoffsMs.length; attempt++) {
+        let resp = await callGemini(primaryUrl);
+
+        // Fallback to 1.5-flash if 2.0-flash is unavailable on this key
+        if (resp.status === STATUS_CODE.NotFound) {
+          const primaryErr = await resp.text().catch(() => "");
+          console.error("Gemini 2.0 Flash unavailable, falling back to 1.5 Flash:", primaryErr);
+          resp = await callGemini(fallbackUrl);
+        }
+
+        if (resp.status !== 429) {
+          geminiResponse = resp;
+          break;
+        }
+
+        lastErrorBody = await resp.text().catch(() => "");
+        if (attempt === backoffsMs.length) {
+          geminiResponse = resp;
+          break;
+        }
+        const wait = backoffsMs[attempt];
+        console.warn(`Gemini 429 received. Retrying in ${wait}ms (attempt ${attempt + 1}/${backoffsMs.length})`);
+        await new Promise((r) => setTimeout(r, wait));
       }
     } catch (error) {
       console.error("Gemini fetch failed:", error);
       return jsonResponse("Failed to reach Gemini API", STATUS_CODE.BadGateway);
     }
 
-    if (!geminiResponse.ok) {
-      const errorBody = await geminiResponse.text().catch(() => "");
-      console.error("Gemini API error:", geminiResponse.status, errorBody);
+    if (!geminiResponse || !geminiResponse.ok) {
+      const status = geminiResponse?.status ?? 502;
+      const errorBody = geminiResponse ? await geminiResponse.text().catch(() => "") : lastErrorBody;
+      console.error("Gemini API error after retries:", status, errorBody);
       return jsonResponse(
-        `Gemini API error (${geminiResponse.status})`,
-        STATUS_CODE.BadGateway,
+        status === 429
+          ? "Gemini API rate limit exceeded after retries"
+          : `Gemini API error (${status})`,
+        status === 429 ? 429 : STATUS_CODE.BadGateway,
       );
     }
 
