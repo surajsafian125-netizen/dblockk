@@ -498,7 +498,7 @@ const Admin = () => {
         return;
       }
 
-      toast.info(`Formatting ${allArticles.length} articles with AI...`);
+      toast.info(`Processing ${allArticles.length} articles one by one...`);
 
       // Pass each raw article through the AI chat function so it gets
       // restructured into the strict 4-section markdown layout enforced
@@ -518,10 +518,15 @@ const Admin = () => {
         return out.trim();
       };
 
+      // Process sequentially with a 4s delay between calls to respect Gemini free-tier rate limits.
       const formattedContents: string[] = [];
-      for (const a of allArticles) {
-        const md = await formatArticle(a);
+      for (let i = 0; i < allArticles.length; i++) {
+        setImportProgress({ current: i + 1, total: allArticles.length });
+        const md = await formatArticle(allArticles[i]);
         formattedContents.push(md);
+        if (i < allArticles.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 4000));
+        }
       }
 
       const rows = allArticles
