@@ -566,6 +566,7 @@ const Admin = () => {
       toast.error(e.message || 'Import failed');
     }
     setImporting(false);
+    setImportProgress(null);
   };
 
   const sendBroadcast = async () => {
