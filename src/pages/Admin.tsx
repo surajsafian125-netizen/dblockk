@@ -725,7 +725,11 @@ const Admin = () => {
           </button>
           <button onClick={importNews} disabled={importing} className="bg-accent text-accent-foreground rounded-xl px-4 py-2 text-sm font-medium hover:opacity-90 transition-all flex items-center gap-2 disabled:opacity-50">
             {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Newspaper className="h-4 w-4" />}
-            {importing ? 'Importing...' : 'Import Global News'}
+            {importing
+              ? importProgress
+                ? `Processing articles one by one... (${importProgress.current}/${importProgress.total})`
+                : 'Processing articles one by one...'
+              : 'Import Global News'}
           </button>
           <button onClick={() => setShowAnalytics(!showAnalytics)} className="glass rounded-xl px-4 py-2 text-sm font-medium glass-hover transition-all flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-primary" /> Analytics Control
