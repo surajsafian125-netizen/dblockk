@@ -45,6 +45,18 @@ export async function streamChat({
         if (text) errMsg += `: ${text.slice(0, 200)}`;
       } catch { /* ignore */ }
     }
+
+    // Safety: surface 429/500 as a toast instead of crashing the UI
+    if (resp.status === 429) {
+      toast.error("AI is rate-limited", {
+        description: "The Gemini API quota has been hit. Please try again in a moment.",
+      });
+    } else if (resp.status >= 500) {
+      toast.error("AI service unavailable", {
+        description: errMsg || "The AI backend returned an error. Please try again shortly.",
+      });
+    }
+
     throw new Error(errMsg);
   }
 
