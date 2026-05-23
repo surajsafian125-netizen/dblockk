@@ -470,18 +470,14 @@ const Admin = () => {
 
       const allArticles: Array<{ title: string; description: string; image: string; link: string }> = [];
 
-      const results = await Promise.allSettled(
-        RSS_FEEDS.map(async (feedUrl) => {
+      for (const feedUrl of RSS_FEEDS) {
+        try {
           const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`);
-          if (!res.ok) return [];
+          if (!res.ok) continue;
           const json = await res.json();
-          return (json.items || []).slice(0, 5);
-        })
-      );
+          const feedItems = (json.items || []).slice(0, 5);
 
-      for (const result of results) {
-        if (result.status === 'fulfilled') {
-          for (const item of result.value) {
+          for (const item of feedItems) {
             allArticles.push({
               title: item.title || 'Untitled',
               description: item.description?.replace(/<[^>]*>/g, '').slice(0, 300) || '',
@@ -489,6 +485,8 @@ const Admin = () => {
               link: item.link || '',
             });
           }
+        } catch (err) {
+          console.error('[Import News] RSS fetch failed for:', feedUrl, err);
         }
       }
 
@@ -520,29 +518,29 @@ const Admin = () => {
         return out.trim();
       };
 
-      // Process sequentially with an 8s frontend delay between calls to respect Gemini free-tier rate limits.
-      const formattedContents: string[] = [];
-      for (let i = 0; i < allArticles.length; i++) {
-        setImportProgress({ current: i + 1, total: allArticles.length });
-        toast.loading(`Processing article ${i + 1} of ${allArticles.length}... Please wait to prevent API limits.`, {
+      // Process sequentially with an 8s frontend delay after every Gemini call to respect free-tier rate limits.
+      const formattedArticles: Array<{ article: { title: string; description: string; image: string; link: string }; content: string }> = [];
+      let articleIndex = 0;
+      for (const article of allArticles) {
+        articleIndex += 1;
+        setImportProgress({ current: articleIndex, total: allArticles.length });
+        toast.loading(`Processing article ${articleIndex} of ${allArticles.length}... Please wait to prevent API limits.`, {
           id: 'news-import-progress',
         });
-        const md = await formatArticle(allArticles[i]);
-        formattedContents.push(md);
-        if (i < allArticles.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 8000));
-        }
+        const content = await formatArticle(article);
+        formattedArticles.push({ article, content });
+        await new Promise((r) => setTimeout(r, 8000));
       }
 
-      const rows = allArticles
-        .map((a, i) => ({ a, content: formattedContents[i] }))
-        .filter(({ content }) => content && content.length > 100)
-        .map(({ a, content }) => ({
-          title: a.title,
-          content,
-          description: a.description.slice(0, 120) || null,
+      const rows = [];
+      for (const formattedArticle of formattedArticles) {
+        if (!formattedArticle.content || formattedArticle.content.length <= 100) continue;
+        rows.push({
+          title: formattedArticle.article.title,
+          content: formattedArticle.content,
+          description: formattedArticle.article.description.slice(0, 120) || null,
           category: 'News',
-          image_url: a.image || null,
+          image_url: formattedArticle.article.image || null,
           tags: ['imported', 'global-news'],
           user_id: userData.user.id,
           published: true,
@@ -551,7 +549,8 @@ const Admin = () => {
           engagement_score: 0,
           reading_time: 4,
           is_trending: false,
-        }));
+        });
+      }
 
       if (rows.length === 0) {
         toast.error('AI formatting failed for all articles', {
