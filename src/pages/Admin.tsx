@@ -498,7 +498,9 @@ const Admin = () => {
         return;
       }
 
-      toast.info(`Processing ${allArticles.length} articles one by one...`);
+      toast.info(`Processing article 1 of ${allArticles.length}... Please wait to prevent API limits.`, {
+        id: 'news-import-progress',
+      });
 
       // Pass each raw article through the AI chat function so it gets
       // restructured into the strict 4-section markdown layout enforced
@@ -518,14 +520,17 @@ const Admin = () => {
         return out.trim();
       };
 
-      // Process sequentially with a 4s delay between calls to respect Gemini free-tier rate limits.
+      // Process sequentially with an 8s frontend delay between calls to respect Gemini free-tier rate limits.
       const formattedContents: string[] = [];
       for (let i = 0; i < allArticles.length; i++) {
         setImportProgress({ current: i + 1, total: allArticles.length });
+        toast.loading(`Processing article ${i + 1} of ${allArticles.length}... Please wait to prevent API limits.`, {
+          id: 'news-import-progress',
+        });
         const md = await formatArticle(allArticles[i]);
         formattedContents.push(md);
         if (i < allArticles.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 4000));
+          await new Promise((resolve) => setTimeout(resolve, 8000));
         }
       }
 
@@ -549,21 +554,30 @@ const Admin = () => {
         }));
 
       if (rows.length === 0) {
-        toast.error('AI formatting failed for all articles');
+        toast.error('AI formatting failed for all articles', {
+          id: 'news-import-progress',
+        });
         setImporting(false);
+        setImportProgress(null);
         return;
       }
 
       const { error } = await supabase.from('posts').insert(rows);
       if (error) {
-        toast.error(formatSupabaseError(error));
+        toast.error(formatSupabaseError(error), {
+          id: 'news-import-progress',
+        });
         console.error('[Import News] Insert error:', error);
       } else {
-        toast.success(`Imported & formatted ${rows.length} articles!`);
+        toast.success(`Imported & formatted ${rows.length} articles!`, {
+          id: 'news-import-progress',
+        });
         fetchPosts();
       }
     } catch (e: any) {
-      toast.error(e.message || 'Import failed');
+      toast.error(e.message || 'Import failed', {
+        id: 'news-import-progress',
+      });
     }
     setImporting(false);
     setImportProgress(null);
@@ -727,8 +741,8 @@ const Admin = () => {
             {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Newspaper className="h-4 w-4" />}
             {importing
               ? importProgress
-                ? `Processing articles one by one... (${importProgress.current}/${importProgress.total})`
-                : 'Processing articles one by one...'
+                ? `Processing article ${importProgress.current} of ${importProgress.total}... Please wait to prevent API limits.`
+                : 'Processing articles... Please wait to prevent API limits.'
               : 'Import Global News'}
           </button>
           <button onClick={() => setShowAnalytics(!showAnalytics)} className="glass rounded-xl px-4 py-2 text-sm font-medium glass-hover transition-all flex items-center gap-2">
