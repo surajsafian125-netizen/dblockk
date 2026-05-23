@@ -554,7 +554,9 @@ const Admin = () => {
         }));
 
       if (rows.length === 0) {
-        toast.error('AI formatting failed for all articles');
+        toast.error('AI formatting failed for all articles', {
+          id: 'news-import-progress',
+        });
         setImporting(false);
         setImportProgress(null);
         return;
@@ -562,7 +564,9 @@ const Admin = () => {
 
       const { error } = await supabase.from('posts').insert(rows);
       if (error) {
-        toast.error(formatSupabaseError(error));
+        toast.error(formatSupabaseError(error), {
+          id: 'news-import-progress',
+        });
         console.error('[Import News] Insert error:', error);
       } else {
         toast.success(`Imported & formatted ${rows.length} articles!`, {
@@ -571,7 +575,9 @@ const Admin = () => {
         fetchPosts();
       }
     } catch (e: any) {
-      toast.error(e.message || 'Import failed');
+      toast.error(e.message || 'Import failed', {
+        id: 'news-import-progress',
+      });
     }
     setImporting(false);
     setImportProgress(null);
