@@ -498,7 +498,9 @@ const Admin = () => {
         return;
       }
 
-      toast.info(`Processing ${allArticles.length} articles one by one...`);
+      toast.info(`Processing article 1 of ${allArticles.length}... Please wait to prevent API limits.`, {
+        id: 'news-import-progress',
+      });
 
       // Pass each raw article through the AI chat function so it gets
       // restructured into the strict 4-section markdown layout enforced
@@ -518,14 +520,17 @@ const Admin = () => {
         return out.trim();
       };
 
-      // Process sequentially with a 4s delay between calls to respect Gemini free-tier rate limits.
+      // Process sequentially with an 8s frontend delay between calls to respect Gemini free-tier rate limits.
       const formattedContents: string[] = [];
       for (let i = 0; i < allArticles.length; i++) {
         setImportProgress({ current: i + 1, total: allArticles.length });
+        toast.loading(`Processing article ${i + 1} of ${allArticles.length}... Please wait to prevent API limits.`, {
+          id: 'news-import-progress',
+        });
         const md = await formatArticle(allArticles[i]);
         formattedContents.push(md);
         if (i < allArticles.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 4000));
+          await new Promise((resolve) => setTimeout(resolve, 8000));
         }
       }
 
@@ -551,6 +556,7 @@ const Admin = () => {
       if (rows.length === 0) {
         toast.error('AI formatting failed for all articles');
         setImporting(false);
+        setImportProgress(null);
         return;
       }
 
@@ -559,7 +565,9 @@ const Admin = () => {
         toast.error(formatSupabaseError(error));
         console.error('[Import News] Insert error:', error);
       } else {
-        toast.success(`Imported & formatted ${rows.length} articles!`);
+        toast.success(`Imported & formatted ${rows.length} articles!`, {
+          id: 'news-import-progress',
+        });
         fetchPosts();
       }
     } catch (e: any) {
