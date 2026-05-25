@@ -496,7 +496,9 @@ const Admin = () => {
         return;
       }
 
-      toast.info(`Processing article 1 of ${allArticles.length}... Please wait to prevent API limits.`, {
+      const articlesToProcess = allArticles.slice(0, 5);
+
+      toast.info(`Processing article 1 of 5... Please wait to prevent API limits.`, {
         id: 'news-import-progress',
       });
 
@@ -521,15 +523,15 @@ const Admin = () => {
       // Process sequentially with an 8s frontend delay after every Gemini call to respect free-tier rate limits.
       const formattedArticles: Array<{ article: { title: string; description: string; image: string; link: string }; content: string }> = [];
       let articleIndex = 0;
-      for (const article of allArticles) {
+      for (const article of articlesToProcess) {
         articleIndex += 1;
-        setImportProgress({ current: articleIndex, total: allArticles.length });
-        toast.loading(`Processing article ${articleIndex} of ${allArticles.length}... Please wait to prevent API limits.`, {
+        setImportProgress({ current: articleIndex, total: 5 });
+        toast.loading(`Processing article ${articleIndex} of 5... Please wait to prevent API limits.`, {
           id: 'news-import-progress',
         });
         const content = await formatArticle(article);
         formattedArticles.push({ article, content });
-        await new Promise((r) => setTimeout(r, 8000));
+        await new Promise((r) => setTimeout(r, 25000));
       }
 
       const rows = [];
