@@ -38,8 +38,7 @@ const Index = () => {
                 Audio Vault & <span className="text-primary text-glow">Culture</span>
               </motion.h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <PodcastCreatorChart />
+              <div className="grid grid-cols-1 gap-6">
                 <CultureEntertainmentFeed />
               </div>
             </section>
