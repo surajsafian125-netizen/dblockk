@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import ContentGrid from '@/components/ContentGrid';
-import PodcastCreatorChart from '@/components/PodcastCreatorChart';
+
 import CultureEntertainmentFeed from '@/components/CultureEntertainmentFeed';
 import FloatingActionButton from '@/components/FloatingActionButton';
 import ParticleBackground from '@/components/ParticleBackground';
@@ -38,8 +38,7 @@ const Index = () => {
                 Audio Vault & <span className="text-primary text-glow">Culture</span>
               </motion.h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <PodcastCreatorChart />
+              <div className="grid grid-cols-1 gap-6">
                 <CultureEntertainmentFeed />
               </div>
             </section>
