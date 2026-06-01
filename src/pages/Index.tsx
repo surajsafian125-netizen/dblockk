@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import ContentGrid from '@/components/ContentGrid';
-import PodcastCreatorChart from '@/components/PodcastCreatorChart';
+
 import CultureEntertainmentFeed from '@/components/CultureEntertainmentFeed';
 import FloatingActionButton from '@/components/FloatingActionButton';
 import ParticleBackground from '@/components/ParticleBackground';
