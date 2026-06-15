@@ -42,12 +42,14 @@ serve(async (req) => {
       throw new Error("FOOTBALL_API_KEY not configured");
     }
 
-    // Dynamically generate today's date in YYYY-MM-DD (UTC) to pull live/current fixtures only
-    const today = new Date().toISOString().split("T")[0];
+    // Pull a rolling window: 3 days back through 3 days forward so the radar always
+    // shows the most recent matches relative to whenever the site is being used.
+    const fmt = (d: Date) => d.toISOString().split("T")[0];
+    const now = new Date();
+    const dateFrom = fmt(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000));
+    const dateTo = fmt(new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000));
 
-    // Pull ALL of today's matches (live, upcoming, and finished) — no status filter
-    // so the radar reflects current-day fixtures rather than stale historical data.
-    const url = `https://api.football-data.org/v4/matches?dateFrom=${today}&dateTo=${today}`;
+    const url = `https://api.football-data.org/v4/matches?dateFrom=${dateFrom}&dateTo=${dateTo}`;
 
     const res = await fetch(url, {
       headers: { "X-Auth-Token": apiKey },
@@ -60,9 +62,18 @@ serve(async (req) => {
     }
 
     const data = await res.json();
-    const allMatches = (data.matches || []).filter((m: any) =>
-      TOP_COMPETITIONS.includes(m.competition?.id)
-    );
+    const allMatches = (data.matches || [])
+      .filter((m: any) => TOP_COMPETITIONS.includes(m.competition?.id))
+      .sort((a: any, b: any) => {
+        // Priority: live first, then closest-to-now (upcoming before recently finished)
+        const liveStatuses = ["IN_PLAY", "LIVE", "PAUSED"];
+        const aLive = liveStatuses.includes(a.status) ? 0 : 1;
+        const bLive = liveStatuses.includes(b.status) ? 0 : 1;
+        if (aLive !== bLive) return aLive - bLive;
+        const aDiff = Math.abs(new Date(a.utcDate).getTime() - now.getTime());
+        const bDiff = Math.abs(new Date(b.utcDate).getTime() - now.getTime());
+        return aDiff - bDiff;
+      });
 
     // Build match list with events embedded
     const matches = allMatches.slice(0, 6).map((m: any) => {
