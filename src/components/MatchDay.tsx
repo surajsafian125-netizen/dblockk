@@ -123,17 +123,19 @@ const MatchDay = () => {
         const { data, error } = await supabase.functions.invoke('football-scores');
         if (error) throw error;
         const matches: Fixture[] = data?.matches ?? [];
-        if (matches.length === 0) throw new Error('No matches');
         setFixtures(matches.slice(0, 5));
-        setIsLive(true);
+        setIsLive(matches.length > 0);
       } catch {
-        setFixtures(FALLBACK_FIXTURES);
+        setFixtures([]);
         setIsLive(false);
       } finally {
         setLoading(false);
       }
     };
     fetchScores();
+    // Auto-refresh every 60s so the panel reflects current matches
+    const iv = setInterval(fetchScores, 60_000);
+    return () => clearInterval(iv);
   }, []);
 
   useEffect(() => {
