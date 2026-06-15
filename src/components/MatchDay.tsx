@@ -218,6 +218,10 @@ const MatchDay = () => {
               <div className="flex items-center justify-center h-[200px] text-muted-foreground text-sm animate-pulse">
                 Fetching live scores…
               </div>
+            ) : fixtures.length === 0 ? (
+              <div className="flex items-center justify-center h-[200px] text-muted-foreground text-sm text-center px-4">
+                No recent fixtures from the top leagues right now. Scores refresh automatically.
+              </div>
             ) : (
               <div className="space-y-2.5 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
                 {fixtures.map((f, i) => (
