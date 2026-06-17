@@ -12,6 +12,9 @@ verify_jwt = false
 [functions.security-stats]
 verify_jwt = false
 
+[functions.jsearch-jobs]
+verify_jwt = false
+
 
 
 [functions.youtube-highlights]
