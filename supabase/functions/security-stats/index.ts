@@ -1,111 +1,120 @@
-// Real security/traffic stats from Supabase analytics logs
+// Real project stats from Supabase (auth + public tables) using service role.
+import { createClient } from 'npm:@supabase/supabase-js@2.45.0';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const PROJECT_REF = Deno.env.get('SUPABASE_URL')?.match(/https:\/\/([^.]+)\./)?.[1] ?? '';
-const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL')!,
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+);
 
-async function runAnalytics(sql: string) {
-  const url = `https://api.supabase.com/v1/projects/${PROJECT_REF}/analytics/endpoints/logs.all`;
-  // Fallback to management API not available with service key — use platform analytics via PostgREST-style endpoint
-  // Instead, use the public logs endpoint
-  const res = await fetch(
-    `https://${PROJECT_REF}.supabase.co/platform/analytics/endpoints/logs.all?sql=${encodeURIComponent(sql)}`,
-    { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } }
-  );
-  if (!res.ok) throw new Error(`analytics ${res.status}`);
-  return res.json();
-}
+type LogEntry = {
+  id: string;
+  timestamp: string;
+  type: 'info' | 'warning' | 'blocked' | 'success';
+  source: string;
+  message: string;
+};
+
+const fmtTime = (iso: string) => new Date(iso).toISOString().split('T')[1].split('.')[0];
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    // Pull recent auth logs + edge function logs in parallel
-    const authSql = `
-      select timestamp, event_message, metadata.status as status, metadata.path as path, metadata.msg as msg, metadata.level as level
-      from auth_logs cross join unnest(metadata) as metadata
-      where timestamp > timestamp_sub(current_timestamp(), interval 24 hour)
-      order by timestamp desc limit 40
-    `;
-    const edgeSql = `
-      select timestamp, event_message, response.status_code as status, request.method as method, m.execution_time_ms as ms
-      from function_edge_logs
-      cross join unnest(metadata) as m
-      cross join unnest(m.response) as response
-      cross join unnest(m.request) as request
-      where timestamp > timestamp_sub(current_timestamp(), interval 24 hour)
-      order by timestamp desc limit 40
-    `;
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-    const [authRes, edgeRes] = await Promise.allSettled([
-      runAnalytics(authSql),
-      runAnalytics(edgeSql),
+    // Real data: total users, recent posts, recent comments, recent likes, recent bookmarks, leads, gigs
+    const [usersList, postsRes, commentsRes, likesRes, bookmarksRes, leadsRes, gigsRes, recentPosts, recentComments, recentLikes, recentLeads, recentGigs] = await Promise.all([
+      supabase.auth.admin.listUsers({ page: 1, perPage: 1 }),
+      supabase.from('posts').select('id', { count: 'exact', head: true }).gte('created_at', since),
+      supabase.from('comments').select('id', { count: 'exact', head: true }).gte('created_at', since),
+      supabase.from('likes').select('id', { count: 'exact', head: true }).gte('created_at', since),
+      supabase.from('bookmarks').select('id', { count: 'exact', head: true }).gte('created_at', since),
+      supabase.from('client_leads').select('id', { count: 'exact', head: true }).gte('created_at', since),
+      supabase.from('community_gigs').select('id', { count: 'exact', head: true }).gte('created_at', since),
+      supabase.from('posts').select('id,title,created_at,published').order('created_at', { ascending: false }).limit(8),
+      supabase.from('comments').select('id,created_at,post_id').order('created_at', { ascending: false }).limit(8),
+      supabase.from('likes').select('id,created_at,post_id').order('created_at', { ascending: false }).limit(8),
+      supabase.from('client_leads').select('id,created_at,name,status').order('created_at', { ascending: false }).limit(5),
+      supabase.from('community_gigs').select('id,created_at,title,status').order('created_at', { ascending: false }).limit(5),
     ]);
 
-    const authRows = authRes.status === 'fulfilled' ? (authRes.value.result ?? authRes.value.data ?? []) : [];
-    const edgeRows = edgeRes.status === 'fulfilled' ? (edgeRes.value.result ?? edgeRes.value.data ?? []) : [];
+    const totalUsers = (usersList.data as any)?.total ?? 0;
 
-    // Build unified log feed
-    type LogEntry = { id: string; timestamp: string; type: 'info'|'warning'|'blocked'|'success'; source: string; message: string };
     const logs: LogEntry[] = [];
+    let blocked = 0;
 
-    let blockedCount = 0;
-    let totalEdge = 0;
-    let errorEdge = 0;
-
-    for (const r of authRows) {
-      const status = Number(r.status ?? 0);
-      const ts = new Date(r.timestamp / 1000).toISOString().split('T')[1].split('.')[0];
-      const path = r.path ?? '/auth';
-      let type: LogEntry['type'] = 'info';
-      if (status >= 500) { type = 'warning'; }
-      else if (status === 401 || status === 403) { type = 'blocked'; blockedCount++; }
-      else if (status >= 200 && status < 300) { type = 'success'; }
+    for (const p of recentPosts.data ?? []) {
       logs.push({
-        id: `a-${r.timestamp}`,
-        timestamp: ts,
-        type,
-        source: 'Auth Service',
-        message: `${r.msg ?? 'auth event'} — ${path} (${status || '—'})`,
+        id: `p-${p.id}`,
+        timestamp: fmtTime(p.created_at),
+        type: p.published ? 'success' : 'info',
+        source: 'Posts',
+        message: `${p.published ? 'PUBLISHED' : 'DRAFT'} — "${String(p.title).slice(0, 60)}"`,
       });
     }
-
-    for (const r of edgeRows) {
-      totalEdge++;
-      const status = Number(r.status ?? 0);
-      if (status >= 400) errorEdge++;
-      const ts = new Date(r.timestamp / 1000).toISOString().split('T')[1].split('.')[0];
-      let type: LogEntry['type'] = 'info';
-      if (status >= 500) type = 'warning';
-      else if (status === 401 || status === 403 || status === 429) { type = 'blocked'; blockedCount++; }
-      else if (status >= 200 && status < 300) type = 'success';
+    for (const c of recentComments.data ?? []) {
       logs.push({
-        id: `e-${r.timestamp}`,
-        timestamp: ts,
-        type,
-        source: 'Edge Function',
-        message: `${r.method ?? 'GET'} ${status || '—'} (${Math.round(r.ms ?? 0)}ms)`,
+        id: `c-${c.id}`,
+        timestamp: fmtTime(c.created_at),
+        type: 'info',
+        source: 'Comments',
+        message: `New comment on post ${String(c.post_id).slice(0, 8)}…`,
+      });
+    }
+    for (const l of recentLikes.data ?? []) {
+      logs.push({
+        id: `l-${l.id}`,
+        timestamp: fmtTime(l.created_at),
+        type: 'success',
+        source: 'Likes',
+        message: `Like recorded on post ${String(l.post_id).slice(0, 8)}…`,
+      });
+    }
+    for (const ld of recentLeads.data ?? []) {
+      const isNew = ld.status === 'new';
+      if (!isNew) blocked++; // count non-new as something
+      logs.push({
+        id: `ld-${ld.id}`,
+        timestamp: fmtTime(ld.created_at),
+        type: isNew ? 'warning' : 'success',
+        source: 'Client Leads',
+        message: `Partner inquiry — ${ld.name} (${ld.status})`,
+      });
+    }
+    for (const g of recentGigs.data ?? []) {
+      const pending = g.status === 'pending';
+      logs.push({
+        id: `g-${g.id}`,
+        timestamp: fmtTime(g.created_at),
+        type: pending ? 'warning' : 'success',
+        source: 'Community Gigs',
+        message: `Gig "${String(g.title).slice(0, 40)}" — ${g.status}`,
       });
     }
 
     logs.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
-
-    // Uptime estimate: % of edge calls that returned <500
-    const uptime = totalEdge === 0 ? 100 : Math.max(0, 100 - (errorEdge / totalEdge) * 100);
 
     return new Response(
       JSON.stringify({
         ok: true,
         logs: logs.slice(-40),
         stats: {
-          blockedCount,
-          totalRequests: totalEdge + authRows.length,
-          errorCount: errorEdge,
-          uptime: Number(uptime.toFixed(2)),
+          totalUsers,
+          last24h: {
+            posts: postsRes.count ?? 0,
+            comments: commentsRes.count ?? 0,
+            likes: likesRes.count ?? 0,
+            bookmarks: bookmarksRes.count ?? 0,
+            leads: leadsRes.count ?? 0,
+            gigs: gigsRes.count ?? 0,
+          },
           window: '24h',
+          generatedAt: new Date().toISOString(),
         },
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
