@@ -9,6 +9,7 @@ import BreakingNewsTicker from '@/components/pulse/BreakingNewsTicker';
 import CryptoTerminal from '@/components/pulse/CryptoTerminal';
 import GlobalHubs from '@/components/pulse/GlobalHubs';
 import MatchDayRadar from '@/components/pulse/MatchDayRadar';
+import PlayerIntel from '@/components/pulse/PlayerIntel';
 import CosmicCommand from '@/components/pulse/CosmicCommand';
 import MatchDay from '@/components/MatchDay';
 import GeoIntelligenceHub from '@/components/GeoIntelligenceHub';
@@ -78,6 +79,12 @@ const PulseDashboard = () => {
         <section className="mb-10">
           <MatchDayRadar />
         </section>
+
+        {/* Sports Intel — Player Search */}
+        <section className="mb-10">
+          <PlayerIntel />
+        </section>
+
 
         {/* Cosmic Command — NASA APOD */}
         <section className="mb-10">
