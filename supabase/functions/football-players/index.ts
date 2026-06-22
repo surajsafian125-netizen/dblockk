@@ -1,5 +1,5 @@
 // Edge function: proxy to free-api-live-football-data on RapidAPI
-// Provides player search + player details (rating, formation/position, stats)
+// Automated live football dashboard data (live matches, match details, top players)
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,6 +9,18 @@ const corsHeaders = {
 };
 
 const RAPID_HOST = "free-api-live-football-data.p.rapidapi.com";
+
+async function rapid(endpoint: string, apiKey: string) {
+  const res = await fetch(`https://${RAPID_HOST}${endpoint}`, {
+    headers: { "x-rapidapi-host": RAPID_HOST, "x-rapidapi-key": apiKey },
+  });
+  const text = await res.text();
+  try {
+    return { ok: res.ok, status: res.status, data: JSON.parse(text) };
+  } catch {
+    return { ok: res.ok, status: res.status, data: text };
+  }
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -24,56 +36,54 @@ Deno.serve(async (req) => {
       );
     }
 
-    let action = "search";
-    let search = "";
-    let playerId = "";
+    let action = "live";
+    let matchId = "";
 
     if (req.method === "GET") {
       const url = new URL(req.url);
-      action = url.searchParams.get("action") || "search";
-      search = url.searchParams.get("search") || "";
-      playerId = url.searchParams.get("playerId") || "";
+      action = url.searchParams.get("action") || "live";
+      matchId = url.searchParams.get("matchId") || "";
     } else {
       const body = await req.json().catch(() => ({}));
-      action = body.action || "search";
-      search = body.search || "";
-      playerId = body.playerId || "";
+      action = body.action || "live";
+      matchId = body.matchId || "";
     }
 
-    let endpoint = "";
-    if (action === "search") {
-      const q = (search || "m").trim().slice(0, 40);
-      endpoint = `/football-players-search?search=${encodeURIComponent(q)}`;
-    } else if (action === "player") {
-      if (!playerId) {
-        return new Response(JSON.stringify({ error: "playerId required" }), {
+    if (action === "live") {
+      // Live + today's matches in parallel
+      const today = new Date();
+      const yyyymmdd = `${today.getUTCFullYear()}${String(today.getUTCMonth() + 1).padStart(2, "0")}${String(today.getUTCDate()).padStart(2, "0")}`;
+      const [live, today_] = await Promise.all([
+        rapid("/football-current-live", apiKey),
+        rapid(`/football-get-matches-by-date?date=${yyyymmdd}`, apiKey),
+      ]);
+      return new Response(
+        JSON.stringify({ live: live.data, today: today_.data, date: yyyymmdd }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "public, max-age=30" } },
+      );
+    }
+
+    if (action === "match") {
+      if (!matchId) {
+        return new Response(JSON.stringify({ error: "matchId required" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      endpoint = `/football-get-player-detail?playerid=${encodeURIComponent(playerId)}`;
-    } else {
-      return new Response(JSON.stringify({ error: "Unknown action" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      const [detail, stats, players] = await Promise.all([
+        rapid(`/football-get-match-detail?matchid=${encodeURIComponent(matchId)}`, apiKey),
+        rapid(`/football-get-match-statistics?matchid=${encodeURIComponent(matchId)}`, apiKey),
+        rapid(`/football-get-top-rated-players-by-match?matchid=${encodeURIComponent(matchId)}`, apiKey),
+      ]);
+      return new Response(
+        JSON.stringify({ detail: detail.data, stats: stats.data, players: players.data }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "public, max-age=30" } },
+      );
     }
 
-    const upstream = await fetch(`https://${RAPID_HOST}${endpoint}`, {
-      headers: {
-        "x-rapidapi-host": RAPID_HOST,
-        "x-rapidapi-key": apiKey,
-      },
-    });
-
-    const text = await upstream.text();
-    return new Response(text, {
-      status: upstream.status,
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json",
-        "Cache-Control": "public, max-age=120",
-      },
+    return new Response(JSON.stringify({ error: "Unknown action" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     return new Response(JSON.stringify({ error: String(e) }), {
