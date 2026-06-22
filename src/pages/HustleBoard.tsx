@@ -66,7 +66,7 @@ const HustleBoard = () => {
   const [filterCat, setFilterCat] = useState<string>('All');
 
   // Tabs: 'community' | 'remote'
-  const [tab, setTab] = useState<'community' | 'remote'>('community');
+  const [tab, setTab] = useState<'community' | 'remote'>('remote');
 
   // Remote jobs (JSearch)
   const [jobs, setJobs] = useState<RemoteJob[]>([]);
