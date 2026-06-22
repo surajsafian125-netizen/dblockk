@@ -19,3 +19,7 @@ verify_jwt = false
 
 [functions.youtube-highlights]
 verify_jwt = false
+
+[functions.football-players]
+verify_jwt = false
+
