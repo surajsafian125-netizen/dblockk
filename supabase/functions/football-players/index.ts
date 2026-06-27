@@ -50,15 +50,25 @@ Deno.serve(async (req) => {
     }
 
     if (action === "live") {
-      // Live + today's matches in parallel
+      const fmt = (d: Date) =>
+        `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
       const today = new Date();
-      const yyyymmdd = `${today.getUTCFullYear()}${String(today.getUTCMonth() + 1).padStart(2, "0")}${String(today.getUTCDate()).padStart(2, "0")}`;
-      const [live, today_] = await Promise.all([
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const todayStr = fmt(today);
+      const yesterdayStr = fmt(yesterday);
+      const [live, today_, yest_] = await Promise.all([
         rapid("/football-current-live", apiKey),
-        rapid(`/football-get-matches-by-date?date=${yyyymmdd}`, apiKey),
+        rapid(`/football-get-matches-by-date?date=${todayStr}`, apiKey),
+        rapid(`/football-get-matches-by-date?date=${yesterdayStr}`, apiKey),
       ]);
       return new Response(
-        JSON.stringify({ live: live.data, today: today_.data, date: yyyymmdd }),
+        JSON.stringify({
+          live: live.data,
+          today: today_.data,
+          yesterday: yest_.data,
+          date: todayStr,
+          yesterdayDate: yesterdayStr,
+        }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "public, max-age=30" } },
       );
     }
