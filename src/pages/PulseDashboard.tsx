@@ -74,15 +74,12 @@ const PulseDashboard = () => {
           <GlobalHubs />
         </section>
 
-        {/* Match Day Radar */}
+        {/* Pro Match Center — unified live football + match radar */}
         <section className="mb-10">
-          <MatchDayRadar />
+          <ProMatchCenter />
         </section>
 
-        {/* Sports Intel — Player Search */}
-        <section className="mb-10">
-          <PlayerIntel />
-        </section>
+
 
 
         {/* Cosmic Command — NASA APOD */}
