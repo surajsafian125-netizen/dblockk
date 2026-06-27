@@ -8,8 +8,7 @@ import Footer from '@/components/Footer';
 import BreakingNewsTicker from '@/components/pulse/BreakingNewsTicker';
 import CryptoTerminal from '@/components/pulse/CryptoTerminal';
 import GlobalHubs from '@/components/pulse/GlobalHubs';
-import MatchDayRadar from '@/components/pulse/MatchDayRadar';
-import PlayerIntel from '@/components/pulse/PlayerIntel';
+import ProMatchCenter from '@/components/pulse/ProMatchCenter';
 import CosmicCommand from '@/components/pulse/CosmicCommand';
 import MatchDay from '@/components/MatchDay';
 import GeoIntelligenceHub from '@/components/GeoIntelligenceHub';
@@ -75,15 +74,12 @@ const PulseDashboard = () => {
           <GlobalHubs />
         </section>
 
-        {/* Match Day Radar */}
+        {/* Pro Match Center — unified live football + match radar */}
         <section className="mb-10">
-          <MatchDayRadar />
+          <ProMatchCenter />
         </section>
 
-        {/* Sports Intel — Player Search */}
-        <section className="mb-10">
-          <PlayerIntel />
-        </section>
+
 
 
         {/* Cosmic Command — NASA APOD */}
