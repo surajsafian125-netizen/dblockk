@@ -64,6 +64,8 @@ const LiveFootballDashboard = () => {
   const [detail, setDetail] = useState<any>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
+  const [recentMatches, setRecentMatches] = useState<Match[]>([]);
+
   const fetchMatches = async () => {
     try {
       const { data, error: fnError } = await supabase.functions.invoke('football-players', {
@@ -72,13 +74,31 @@ const LiveFootballDashboard = () => {
       if (fnError) throw fnError;
       const live = flattenLeagues(data?.live);
       const today = flattenLeagues(data?.today);
-      // Upsert: live first, then today's fixtures (skip duplicates by id)
+      const yesterday = flattenLeagues(data?.yesterday);
       const next = new Map<string, Match>();
       for (const m of [...live, ...today]) {
         const id = String(m.id);
         if (!next.has(id)) next.set(id, m);
       }
       setMatches(next);
+
+      // Recent finished (last 24h fallback)
+      const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+      const recent = [...yesterday, ...today]
+        .filter((m) => m?.status?.finished)
+        .filter((m) => {
+          const ts = (m.timeTS ? m.timeTS * 1000 : 0) || Date.parse((m as any).time || '') || Date.now();
+          return ts >= cutoff;
+        })
+        .sort((a, b) => ((b.timeTS || 0) - (a.timeTS || 0)));
+      // Dedupe
+      const seen = new Set<string>();
+      const dedup: Match[] = [];
+      for (const m of recent) {
+        const id = String(m.id);
+        if (!seen.has(id)) { seen.add(id); dedup.push(m); }
+      }
+      setRecentMatches(dedup);
       setError(null);
     } catch (e: any) {
       setError(e?.message || 'Failed to load matches');
@@ -86,6 +106,7 @@ const LiveFootballDashboard = () => {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     fetchMatches();
