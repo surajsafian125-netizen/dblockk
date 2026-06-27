@@ -191,9 +191,23 @@ const LiveFootballDashboard = () => {
         </div>
       )}
 
-      {!loading && liveMatches.length === 0 && upcomingMatches.length === 0 && !error && (
+      {/* RECENT RESULTS — fallback when no live matches */}
+      {liveMatches.length === 0 && recentMatches.length > 0 && (
+        <div className="mt-6">
+          <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 font-mono">
+            Recent Results · Last 24h
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {recentMatches.slice(0, 12).map((m) => (
+              <MatchCard key={`recent-${m.id}`} match={m} onClick={() => openMatch(m)} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!loading && liveMatches.length === 0 && upcomingMatches.length === 0 && recentMatches.length === 0 && !error && (
         <div className="glass-card p-6 text-center text-sm text-muted-foreground">
-          No live or scheduled matches found for today.
+          No live, scheduled, or recent matches found.
         </div>
       )}
 
