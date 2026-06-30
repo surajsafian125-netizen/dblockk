@@ -114,7 +114,7 @@ const ContentCard = ({
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {post.views.toLocaleString()}</span>
-            <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {post.readingTime}m</span>
+            <span className="flex items-center gap-1" title={new Date(post.createdAt).toLocaleString()}><Clock className="h-3 w-3" /> {timeAgo(post.createdAt)}</span>
           </div>
           <div className="flex items-center gap-2.5">
             <div className="flex items-center gap-1 text-primary text-xs">
