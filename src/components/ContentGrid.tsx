@@ -53,6 +53,7 @@ const ContentGrid = () => {
   const [loading, setLoading] = useState(true);
   const [selectedPost, setSelectedPost] = useState<PostDisplay | null>(null);
   const { bookmarkedIds, toggleBookmark } = useBookmarks();
+  const [, setNow] = useState(Date.now());
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -90,6 +91,22 @@ const ContentGrid = () => {
     };
 
     fetchPosts();
+
+    // Realtime: refresh feed when posts change
+    const channel = supabase
+      .channel('posts-feed-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => {
+        fetchPosts();
+      })
+      .subscribe();
+
+    // Re-render every 60s so "time ago" labels stay current
+    const tick = setInterval(() => setNow(Date.now()), 60_000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(tick);
+    };
   }, []);
 
   let filtered = [...posts];
