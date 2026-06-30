@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, Loader2, Star, Trophy, X, Radio, Calendar } from 'lucide-react';
+import { Activity, Loader2, Star, Trophy, X, Radio, Calendar, Target, Crosshair, Flag, History } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 // ---------- Top 5 European leagues (FotMob IDs) ----------
