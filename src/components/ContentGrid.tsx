@@ -53,6 +53,7 @@ const ContentGrid = () => {
   const [loading, setLoading] = useState(true);
   const [selectedPost, setSelectedPost] = useState<PostDisplay | null>(null);
   const { bookmarkedIds, toggleBookmark } = useBookmarks();
+  const [, setNow] = useState(Date.now());
 
   useEffect(() => {
     const fetchPosts = async () => {
