@@ -354,42 +354,84 @@ const CardRow = ({ team, score, live }: { team: any; score?: number; live?: bool
 );
 
 // ---------- Match Radar Modal ----------
+const findStat = (items: { name: string; home: any; away: any }[], rx: RegExp) =>
+  items.find((s) => rx.test(s.name));
+
+const toNum = (v: any) => {
+  if (v == null) return 0;
+  const m = String(v).match(/-?\d+(\.\d+)?/);
+  return m ? parseFloat(m[0]) : 0;
+};
+
 const MatchRadar = ({ match, detail, loading }: { match: Match; detail: any; loading: boolean }) => {
   const stats = detail?.stats?.response || detail?.stats;
   const playersData = detail?.players?.response || detail?.players;
+  const matchDetail = detail?.detail?.response || detail?.detail;
   const home = match.home || {};
   const away = match.away || {};
   const minute = match.status?.liveTime?.short || match.status?.startTimeStr || '';
   const live = isLive(match);
 
+  // Flatten stats from various FotMob shapes
   const statItems = useMemo(() => {
-    const list = stats?.statistics || stats?.stats || [];
+    const list = stats?.statistics || stats?.stats || stats?.[0]?.stats || [];
     const flat: { name: string; home: any; away: any }[] = [];
-    if (Array.isArray(list)) {
-      for (const grp of list) {
-        const items = grp?.stats || grp?.items || (Array.isArray(grp) ? grp : []);
-        if (Array.isArray(items)) {
-          for (const it of items) {
-            if (it?.title && (it?.stats || it?.values)) {
-              const vals = it.stats || it.values;
-              flat.push({ name: it.title, home: vals?.[0], away: vals?.[1] });
-            }
-          }
-        }
+    const walk = (node: any) => {
+      if (!node) return;
+      if (Array.isArray(node)) { node.forEach(walk); return; }
+      if (node?.title && (node?.stats || node?.values)) {
+        const vals = node.stats || node.values;
+        flat.push({ name: node.title, home: vals?.[0], away: vals?.[1] });
       }
-    }
+      if (node?.stats && Array.isArray(node.stats)) walk(node.stats);
+      if (node?.items && Array.isArray(node.items)) walk(node.items);
+    };
+    walk(list);
     return flat;
   }, [stats]);
 
-  // Try to find possession
-  const possession = statItems.find((s) => /possession/i.test(s.name));
-  const homePoss = possession ? parseFloat(String(possession.home)) || 50 : 50;
-  const awayPoss = possession ? parseFloat(String(possession.away)) || 50 : 50;
+  const possession = findStat(statItems, /possession/i);
+  const homePoss = possession ? toNum(possession.home) || 50 : 50;
+  const awayPoss = possession ? toNum(possession.away) || (100 - homePoss) : 50;
 
-  const topPlayers = (() => {
-    const list = playersData?.topRatedPlayers || playersData?.players || playersData || [];
-    return Array.isArray(list) ? list.slice(0, 6) : [];
-  })();
+  // Highlight tiles
+  const shots = findStat(statItems, /^total shots|^shots$/i);
+  const shotsOnTarget = findStat(statItems, /shots on target|on target/i);
+  const corners = findStat(statItems, /corner/i);
+  const fouls = findStat(statItems, /^fouls/i);
+  const xg = findStat(statItems, /expected goals|\bxg\b/i);
+  const passes = findStat(statItems, /pass accuracy|passes accurate|accurate passes/i);
+
+  const highlights = [
+    { icon: Crosshair, label: 'Shots', stat: shots },
+    { icon: Target, label: 'On Target', stat: shotsOnTarget },
+    { icon: Activity, label: 'xG', stat: xg },
+    { icon: Flag, label: 'Corners', stat: corners },
+    { icon: Activity, label: 'Pass Acc.', stat: passes },
+    { icon: Flag, label: 'Fouls', stat: fouls },
+  ].filter((h) => h.stat);
+
+  // Player ratings
+  const topPlayers = useMemo(() => {
+    const list =
+      playersData?.topRatedPlayers ||
+      playersData?.players ||
+      playersData?.response?.topRatedPlayers ||
+      (Array.isArray(playersData) ? playersData : []);
+    return Array.isArray(list) ? list.slice(0, 8) : [];
+  }, [playersData]);
+
+  // Head-to-head from match detail
+  const h2h = useMemo(() => {
+    const content = matchDetail?.content || matchDetail;
+    const previous =
+      content?.h2h?.matches ||
+      content?.matchFacts?.previousMeetings?.matches ||
+      content?.headToHead?.matches ||
+      matchDetail?.h2h ||
+      [];
+    return Array.isArray(previous) ? previous.slice(0, 5) : [];
+  }, [matchDetail]);
 
   return (
     <div>
@@ -401,7 +443,7 @@ const MatchRadar = ({ match, detail, loading }: { match: Match; detail: any; loa
       <div className="grid grid-cols-3 items-center gap-3 mb-6 p-5 rounded-2xl bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10">
         <div className="text-center">
           <img src={teamLogo(home.id)} alt="" className="w-14 h-14 object-contain mx-auto mb-2" />
-          <div className="text-sm font-bold">{home.name}</div>
+          <div className="text-sm font-bold truncate">{home.name}</div>
         </div>
         <div className="text-center">
           <div className="font-display text-5xl font-bold tabular-nums">
@@ -409,24 +451,59 @@ const MatchRadar = ({ match, detail, loading }: { match: Match; detail: any; loa
             <span className="text-muted-foreground mx-2">:</span>
             <span className={live ? 'text-red-400' : ''}>{away.score ?? '-'}</span>
           </div>
+          {possession && (
+            <div className="text-[10px] font-mono text-muted-foreground mt-1">
+              {homePoss}% poss {awayPoss}%
+            </div>
+          )}
         </div>
         <div className="text-center">
           <img src={teamLogo(away.id)} alt="" className="w-14 h-14 object-contain mx-auto mb-2" />
-          <div className="text-sm font-bold">{away.name}</div>
+          <div className="text-sm font-bold truncate">{away.name}</div>
         </div>
       </div>
+
+      {/* Highlight tiles */}
+      {highlights.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6">
+          {highlights.map((h, i) => {
+            const Icon = h.icon;
+            const hv = toNum(h.stat!.home);
+            const av = toNum(h.stat!.away);
+            const total = hv + av || 1;
+            return (
+              <div key={i} className="rounded-xl p-3 bg-white/[0.04] border border-white/10 backdrop-blur-xl">
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-mono mb-1.5">
+                  <Icon className="w-3 h-3" /> {h.label}
+                </div>
+                <div className="flex items-baseline justify-between text-sm font-bold tabular-nums mb-1">
+                  <span className="text-blue-400">{String(h.stat!.home ?? '-')}</span>
+                  <span className="text-red-400">{String(h.stat!.away ?? '-')}</span>
+                </div>
+                <div className="flex h-1 rounded-full overflow-hidden bg-white/5">
+                  <div className="bg-blue-500" style={{ width: `${(hv / total) * 100}%` }} />
+                  <div className="bg-red-500 ml-auto" style={{ width: `${(av / total) * 100}%` }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Pitch visualization */}
       <div className="mb-6">
         <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 font-mono">Pitch Radar</h4>
         <div className="relative aspect-[2/1] rounded-xl overflow-hidden border border-white/10 bg-gradient-to-br from-green-900/40 via-green-800/30 to-green-900/40">
+          {/* Pitch stripes */}
+          <div className="absolute inset-0 opacity-40" style={{
+            backgroundImage: 'repeating-linear-gradient(90deg, transparent 0 40px, rgba(255,255,255,0.04) 40px 80px)'
+          }} />
           {/* Pitch lines */}
           <div className="absolute inset-0">
             <div className="absolute inset-2 border-2 border-white/30 rounded-sm" />
             <div className="absolute top-1/2 left-2 right-2 border-t-2 border-white/30 -translate-y-px" />
             <div className="absolute left-1/2 top-1/2 w-16 h-16 -translate-x-1/2 -translate-y-1/2 border-2 border-white/30 rounded-full" />
             <div className="absolute left-1/2 top-1/2 w-1.5 h-1.5 -translate-x-1/2 -translate-y-1/2 bg-white/40 rounded-full" />
-            {/* Goal boxes */}
             <div className="absolute left-2 top-1/2 -translate-y-1/2 w-1/6 h-1/2 border-2 border-l-0 border-white/30" />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 w-1/6 h-1/2 border-2 border-r-0 border-white/30" />
           </div>
@@ -449,6 +526,17 @@ const MatchRadar = ({ match, detail, loading }: { match: Match; detail: any; loa
               <span className="text-xs font-mono font-bold text-white/90">{away.name} {awayPoss}%</span>
             </motion.div>
           </div>
+          {/* Shot markers */}
+          {shots && (
+            <>
+              <div className="absolute top-3 left-3 text-[10px] font-mono bg-black/40 px-2 py-0.5 rounded-full border border-blue-400/40 text-blue-300">
+                <Crosshair className="w-2.5 h-2.5 inline mr-1" />{String(shots.home)} shots
+              </div>
+              <div className="absolute top-3 right-3 text-[10px] font-mono bg-black/40 px-2 py-0.5 rounded-full border border-red-400/40 text-red-300">
+                <Crosshair className="w-2.5 h-2.5 inline mr-1" />{String(shots.away)} shots
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -458,23 +546,23 @@ const MatchRadar = ({ match, detail, loading }: { match: Match; detail: any; loa
         </div>
       )}
 
-      {/* Stats */}
+      {/* Full stats */}
       {!loading && statItems.length > 0 && (
         <div className="mb-6">
           <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 font-mono flex items-center gap-1">
-            <Activity className="w-3 h-3" /> Match Stats
+            <Activity className="w-3 h-3" /> Full Match Stats
           </h4>
           <div className="space-y-3">
-            {statItems.slice(0, 8).map((s, i) => {
-              const h = parseFloat(String(s.home)) || 0;
-              const a = parseFloat(String(s.away)) || 0;
+            {statItems.slice(0, 12).map((s, i) => {
+              const h = toNum(s.home);
+              const a = toNum(s.away);
               const total = h + a || 1;
               return (
                 <div key={i}>
                   <div className="grid grid-cols-3 text-xs gap-2 items-center mb-1">
-                    <span className="text-right tabular-nums font-bold">{String(s.home ?? '-')}</span>
+                    <span className="text-right tabular-nums font-bold text-blue-300">{String(s.home ?? '-')}</span>
                     <span className="text-center text-muted-foreground font-mono uppercase tracking-wider text-[10px]">{s.name}</span>
-                    <span className="text-left tabular-nums font-bold">{String(s.away ?? '-')}</span>
+                    <span className="text-left tabular-nums font-bold text-red-300">{String(s.away ?? '-')}</span>
                   </div>
                   <div className="flex h-1 rounded-full overflow-hidden bg-white/5">
                     <div className="bg-blue-500" style={{ width: `${(h / total) * 100}%` }} />
@@ -489,29 +577,77 @@ const MatchRadar = ({ match, detail, loading }: { match: Match; detail: any; loa
 
       {/* Top players */}
       {!loading && topPlayers.length > 0 && (
-        <div>
+        <div className="mb-6">
           <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 font-mono flex items-center gap-1">
             <Star className="w-3 h-3" /> Top Rated Players
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {topPlayers.map((p: any, i: number) => (
-              <div key={i} className="rounded-xl p-3 flex items-center justify-between bg-white/[0.04] border border-white/10">
-                <div className="min-w-0">
-                  <div className="text-sm font-bold truncate">{p?.name || p?.playerName || '—'}</div>
-                  <div className="text-[10px] text-muted-foreground truncate font-mono">
-                    {p?.teamName || p?.team || ''}
+            {topPlayers.map((p: any, i: number) => {
+              const rating = p?.rating ?? p?.ratingNum ?? p?.stats?.rating;
+              const r = toNum(rating);
+              const tone = r >= 8 ? 'text-emerald-400 border-emerald-400/40' : r >= 7 ? 'text-yellow-400 border-yellow-400/40' : 'text-muted-foreground border-white/10';
+              return (
+                <div key={i} className="rounded-xl p-3 flex items-center justify-between bg-white/[0.04] border border-white/10">
+                  <div className="min-w-0 flex items-center gap-2.5">
+                    {p?.id && (
+                      <img
+                        src={`https://images.fotmob.com/image_resources/playerimages/${p.id}.png`}
+                        alt=""
+                        className="w-9 h-9 rounded-full object-cover bg-white/5 shrink-0"
+                        onError={(e) => (e.currentTarget.style.visibility = 'hidden')}
+                      />
+                    )}
+                    <div className="min-w-0">
+                      <div className="text-sm font-bold truncate">{p?.name || p?.playerName || '—'}</div>
+                      <div className="text-[10px] text-muted-foreground truncate font-mono">
+                        {p?.teamName || p?.team || p?.positionText || ''}
+                      </div>
+                    </div>
+                  </div>
+                  <div className={`flex items-center gap-1 text-sm font-bold tabular-nums px-2 py-1 rounded-md border bg-black/30 ${tone}`}>
+                    {rating ?? '—'}
                   </div>
                 </div>
-                <div className="flex items-center gap-1 text-yellow-400 text-sm font-bold tabular-nums">
-                  <Trophy className="w-3 h-3" /> {p?.rating ?? p?.ratingNum ?? '—'}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
 
-      {!loading && statItems.length === 0 && topPlayers.length === 0 && (
+      {/* Head to Head */}
+      {!loading && h2h.length > 0 && (
+        <div className="mb-2">
+          <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 font-mono flex items-center gap-1">
+            <History className="w-3 h-3" /> Head-to-Head · Last {h2h.length}
+          </h4>
+          <div className="space-y-2">
+            {h2h.map((m: any, i: number) => {
+              const hn = m?.home?.name || m?.homeTeam?.name || m?.team1 || '—';
+              const an = m?.away?.name || m?.awayTeam?.name || m?.team2 || '—';
+              const hs = m?.home?.score ?? m?.homeScore ?? m?.score1 ?? '-';
+              const as_ = m?.away?.score ?? m?.awayScore ?? m?.score2 ?? '-';
+              const date = m?.date || m?.matchDate || m?.utcTime || '';
+              const league = m?.tournament?.name || m?.leagueName || '';
+              return (
+                <div key={i} className="rounded-xl p-3 bg-white/[0.03] border border-white/10 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                  <div className="text-right text-xs font-semibold truncate">{hn}</div>
+                  <div className="font-display text-base font-bold tabular-nums text-center px-2">
+                    {hs} <span className="text-muted-foreground">-</span> {as_}
+                  </div>
+                  <div className="text-left text-xs font-semibold truncate">{an}</div>
+                  {(date || league) && (
+                    <div className="col-span-3 text-[10px] text-muted-foreground font-mono text-center truncate">
+                      {league}{league && date ? ' · ' : ''}{date ? new Date(date).toLocaleDateString() : ''}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {!loading && statItems.length === 0 && topPlayers.length === 0 && h2h.length === 0 && (
         <div className="text-center text-sm text-muted-foreground py-4">
           Detailed radar data will appear once the match starts.
         </div>
