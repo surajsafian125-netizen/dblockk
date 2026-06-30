@@ -6,6 +6,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import { sharePost } from '@/lib/shareUtils';
 import type { PostDisplay } from './ContentGrid';
 
+const timeAgo = (iso: string) => {
+  const s = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d}d ago`;
+  return new Date(iso).toLocaleDateString();
+};
+
 const categoryClass: Record<string, string> = {
   news: 'bg-category-news/10 text-category-news',
   hustle: 'bg-category-hustle/10 text-category-hustle',
