@@ -54,30 +54,32 @@ const PulseDashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-10"
         >
-          <div className="flex items-center gap-3 mb-2">
+          <div className="inline-flex items-center gap-3 mb-2 glass glow rounded-2xl px-5 py-3">
             <Activity className="h-7 w-7 text-primary" />
             <h1 className="font-display text-3xl font-bold">
               Pulse <span className="text-primary text-glow">Hub</span>
             </h1>
           </div>
-          <p className="text-muted-foreground text-sm max-w-xl">
+          <p className="text-muted-foreground text-sm max-w-xl mt-3 ml-1">
             Live sports scores, weather intelligence, crypto markets, tech trends — all your real-time data in one place.
           </p>
         </motion.div>
 
         {/* Daily Tech Launches */}
         <section className="mb-10">
-          <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2">
-            🚀 Daily Tech Launches
-          </h2>
+          <div className="glass glow rounded-full px-4 py-2 inline-flex items-center gap-2 mb-5">
+            <span className="text-lg">🚀</span>
+            <h2 className="font-display text-xl font-semibold">Daily Tech Launches</h2>
+          </div>
           <DailyTechLaunches />
         </section>
 
         {/* Tech & Trends */}
         <section className="mb-10">
-          <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2">
-            📊 Tech & Trends
-          </h2>
+          <div className="glass glow rounded-full px-4 py-2 inline-flex items-center gap-2 mb-5">
+            <span className="text-lg">📊</span>
+            <h2 className="font-display text-xl font-semibold">Tech & Trends</h2>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <GlobalTrends />
             <TechCategoryGrowth />
@@ -91,6 +93,10 @@ const PulseDashboard = () => {
 
         {/* Crypto Terminal */}
         <section className="mb-10">
+          <div className="glass glow rounded-full px-4 py-2 inline-flex items-center gap-2 mb-5">
+            <span className="text-lg">💰</span>
+            <h2 className="font-display text-xl font-semibold">Crypto Terminal</h2>
+          </div>
           <CryptoTerminal />
         </section>
 
@@ -101,17 +107,19 @@ const PulseDashboard = () => {
 
         {/* Cosmic Command — NASA APOD */}
         <section className="mb-10">
-          <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2">
-            🌌 Cosmic Command
-          </h2>
+          <div className="glass glow rounded-full px-4 py-2 inline-flex items-center gap-2 mb-5">
+            <span className="text-lg">🌌</span>
+            <h2 className="font-display text-xl font-semibold">Cosmic Command</h2>
+          </div>
           <CosmicCommand />
         </section>
 
         {/* Geo Intelligence Hub */}
         <section className="mb-10">
-          <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2">
-            🌐 Geo Intelligence
-          </h2>
+          <div className="glass glow rounded-full px-4 py-2 inline-flex items-center gap-2 mb-5">
+            <span className="text-lg">🌐</span>
+            <h2 className="font-display text-xl font-semibold">Geo Intelligence</h2>
+          </div>
           <GeoIntelligenceHub />
         </section>
 
@@ -122,9 +130,10 @@ const PulseDashboard = () => {
 
         {/* Match Day */}
         <section className="mb-10">
-          <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2">
-            🏟️ Match Day
-          </h2>
+          <div className="glass glow rounded-full px-4 py-2 inline-flex items-center gap-2 mb-5">
+            <span className="text-lg">🏟️</span>
+            <h2 className="font-display text-xl font-semibold">Match Day</h2>
+          </div>
           <MatchDay />
         </section>
       </div>
