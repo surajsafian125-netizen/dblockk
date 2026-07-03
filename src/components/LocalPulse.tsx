@@ -112,12 +112,20 @@ const LocalPulse = ({ cityQuery, countryQuery }: LocalPulseProps) => {
       );
       const json = await res.json();
       if (json.status === 'ok' && json.items?.length) {
+        const extractImg = (item: any): string => {
+          if (item.thumbnail && item.thumbnail.startsWith('http')) return item.thumbnail;
+          if (item.enclosure?.link?.startsWith('http')) return item.enclosure.link;
+          const desc = item.description || item.content || '';
+          const m = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
+          if (m) return m[1];
+          return `https://source.unsplash.com/400x250/?${encodeURIComponent(cityQuery || 'city')},news&sig=${encodeURIComponent(item.title || '').slice(0, 20)}`;
+        };
         setArticles(
           json.items.slice(0, 8).map((item: any) => ({
             title: item.title || 'Untitled',
             link: item.link || '#',
             pubDate: item.pubDate || '',
-            thumbnail: item.thumbnail || item.enclosure?.link || fallbackThumb,
+            thumbnail: extractImg(item),
             source: item.author || 'Google News',
           }))
         );
