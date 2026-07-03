@@ -139,7 +139,7 @@ const GlobalHubs = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.1 }}
-              className="relative rounded-2xl overflow-hidden h-56 group cursor-default glass glow"
+              className="relative rounded-2xl overflow-hidden h-56 group cursor-default border border-border/20 glow"
             >
               {/* Background image */}
               <img
@@ -149,14 +149,14 @@ const GlobalHubs = () => {
                 loading="lazy"
               />
 
-              {/* Glass overlay */}
-              <div className="absolute inset-0 glass-strong" />
+              {/* Glass tint overlay */}
+              <div className="absolute inset-0 glass opacity-60" />
 
               {/* Ambient tint — darker at night */}
               <div
                 className={`absolute inset-0 transition-colors duration-500 ${
                   night
-                    ? 'bg-gradient-to-t from-black/70 via-black/40 to-black/30'
+                    ? 'bg-gradient-to-t from-black/80 via-black/50 to-black/30'
                     : 'bg-gradient-to-t from-black/60 via-black/25 to-transparent'
                 }`}
               />
@@ -165,19 +165,19 @@ const GlobalHubs = () => {
               <div className="relative z-10 h-full flex flex-col justify-between p-5">
                 {/* Top: weather icon + temp */}
                 <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-foreground/90 text-sm font-medium glass rounded-full px-2.5 py-1">
+                  <span className="flex items-center gap-1.5 text-foreground/90 text-sm font-medium glass-strong rounded-full px-2.5 py-1 shadow-lg">
                     <WIcon className="h-4 w-4 text-primary" />
                     {weather ? `${weather.temp}°C` : '—'}
                   </span>
                   {night && (
-                    <span className="text-[10px] glass rounded-full px-2 py-0.5 text-foreground/70">
+                    <span className="text-[10px] glass-strong rounded-full px-2 py-0.5 text-foreground/80 shadow-lg">
                       Night
                     </span>
                   )}
                 </div>
 
                 {/* Bottom: city info + time */}
-                <div>
+                <div className="glass-strong rounded-xl p-3 border border-border/20 shadow-lg">
                   <p className="font-display text-3xl font-bold text-foreground tracking-tight leading-tight text-glow">
                     {getLocalTime(city.timezone)}
                   </p>
