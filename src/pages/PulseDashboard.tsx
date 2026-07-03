@@ -65,41 +65,12 @@ const PulseDashboard = () => {
           </p>
         </motion.div>
 
-        {/* Crypto Terminal */}
-        <section className="mb-10">
-          <CryptoTerminal />
-        </section>
-
-        {/* Global Hubs */}
-        <section className="mb-10">
-          <GlobalHubs />
-        </section>
-
-        {/* Pro Match Center — unified live football + match radar */}
-        <section className="mb-10">
-          <ProMatchCenter />
-        </section>
-
-
-
-
-        {/* Cosmic Command — NASA APOD */}
+        {/* Daily Tech Launches */}
         <section className="mb-10">
           <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2">
-            🚀 Cosmic Command
+            🚀 Daily Tech Launches
           </h2>
-          <CosmicCommand />
-        </section>
-
-        {/* Live Sports & Weather */}
-        <section className="mb-10">
-          <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2">
-            🏟️ Live Sports & Geo Intel
-          </h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <MatchDay />
-            <GeoIntelligenceHub />
-          </div>
+          <DailyTechLaunches />
         </section>
 
         {/* Tech & Trends */}
@@ -107,11 +78,54 @@ const PulseDashboard = () => {
           <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2">
             📊 Tech & Trends
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <GlobalTrends />
-            <DailyTechLaunches />
             <TechCategoryGrowth />
           </div>
+        </section>
+
+        {/* Local Pulse */}
+        <section className="mb-10">
+          <LocalPulse />
+        </section>
+
+        {/* Crypto Terminal */}
+        <section className="mb-10">
+          <CryptoTerminal />
+        </section>
+
+        {/* Live Sports — Pro Match Center */}
+        <section className="mb-10">
+          <ProMatchCenter />
+        </section>
+
+        {/* Cosmic Command — NASA APOD */}
+        <section className="mb-10">
+          <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2">
+            🌌 Cosmic Command
+          </h2>
+          <CosmicCommand />
+        </section>
+
+        {/* Geo Intelligence Hub */}
+        <section className="mb-10">
+          <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2">
+            🌐 Geo Intelligence
+          </h2>
+          <GeoIntelligenceHub />
+        </section>
+
+        {/* Global Hubs */}
+        <section className="mb-10">
+          <GlobalHubs />
+        </section>
+
+        {/* Match Day */}
+        <section className="mb-10">
+          <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2">
+            🏟️ Match Day
+          </h2>
+          <MatchDay />
         </section>
       </div>
       <Footer />
