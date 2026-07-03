@@ -115,9 +115,14 @@ const GlobalHubs = () => {
 
   return (
     <div>
-      <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2">
-        🌍 Global Hubs
-      </h2>
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="font-display text-xl font-semibold flex items-center gap-2">
+          🌍 Global Hubs
+        </h2>
+        <span className="text-[11px] text-muted-foreground font-mono uppercase tracking-wider">
+          Live weather & time
+        </span>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {cities.map((city, i) => {
           const night = isNightInTimezone(city.timezone);
@@ -134,7 +139,7 @@ const GlobalHubs = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.1 }}
-              className="relative rounded-2xl overflow-hidden h-56 group cursor-default"
+              className="relative rounded-2xl overflow-hidden h-56 group cursor-default border border-border/20 glow"
             >
               {/* Background image */}
               <img
@@ -144,12 +149,15 @@ const GlobalHubs = () => {
                 loading="lazy"
               />
 
-              {/* Overlay — darker at night */}
+              {/* Glass tint overlay */}
+              <div className="absolute inset-0 glass opacity-60" />
+
+              {/* Ambient tint — darker at night */}
               <div
                 className={`absolute inset-0 transition-colors duration-500 ${
                   night
-                    ? 'bg-gradient-to-t from-black/90 via-black/70 to-black/50'
-                    : 'bg-gradient-to-t from-black/80 via-black/40 to-black/20'
+                    ? 'bg-gradient-to-t from-black/80 via-black/50 to-black/30'
+                    : 'bg-gradient-to-t from-black/60 via-black/25 to-transparent'
                 }`}
               />
 
@@ -157,26 +165,26 @@ const GlobalHubs = () => {
               <div className="relative z-10 h-full flex flex-col justify-between p-5">
                 {/* Top: weather icon + temp */}
                 <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-white/90 text-sm font-medium">
-                    <WIcon className="h-5 w-5" />
+                  <span className="flex items-center gap-1.5 text-foreground/90 text-sm font-medium glass-strong rounded-full px-2.5 py-1 shadow-lg">
+                    <WIcon className="h-4 w-4 text-primary" />
                     {weather ? `${weather.temp}°C` : '—'}
                   </span>
                   {night && (
-                    <span className="text-[10px] bg-white/10 text-white/70 rounded-full px-2 py-0.5 backdrop-blur-sm">
+                    <span className="text-[10px] glass-strong rounded-full px-2 py-0.5 text-foreground/80 shadow-lg">
                       Night
                     </span>
                   )}
                 </div>
 
                 {/* Bottom: city info + time */}
-                <div>
-                  <p className="font-display text-3xl font-bold text-white tracking-tight leading-tight">
+                <div className="glass-strong rounded-xl p-3 border border-border/20 shadow-lg">
+                  <p className="font-display text-3xl font-bold text-foreground tracking-tight leading-tight text-glow">
                     {getLocalTime(city.timezone)}
                   </p>
-                  <p className="font-display text-lg font-semibold text-white mt-1">
+                  <p className="font-display text-lg font-semibold text-foreground mt-1">
                     {city.name}
                   </p>
-                  <p className="text-xs text-white/60">{city.country}</p>
+                  <p className="text-xs text-muted-foreground">{city.country}</p>
                 </div>
               </div>
             </motion.div>

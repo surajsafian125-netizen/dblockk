@@ -19,13 +19,13 @@ const BreakingNewsTicker = () => {
   const doubled = [...headlines, ...headlines];
 
   return (
-    <div className="w-full overflow-hidden bg-destructive/10 border-b border-destructive/20 backdrop-blur-md">
+    <div className="w-full overflow-hidden glass border-b border-border/20">
       <div className="flex items-center">
         {/* Static BREAKING label */}
         <div className="shrink-0 bg-destructive px-4 py-2 flex items-center gap-2 z-10">
           <span
             className={`h-2.5 w-2.5 rounded-full transition-opacity duration-300 ${
-              tick ? 'bg-white opacity-100' : 'bg-white/40 opacity-50'
+              tick ? 'bg-destructive-foreground opacity-100' : 'bg-destructive-foreground/40 opacity-50'
             }`}
           />
           <span className="text-destructive-foreground font-bold text-xs tracking-widest uppercase font-display">
@@ -35,7 +35,7 @@ const BreakingNewsTicker = () => {
 
         {/* Scrolling headlines */}
         <div className="overflow-hidden flex-1">
-          <div className="breaking-ticker-track flex items-center gap-16 py-2 whitespace-nowrap">
+          <div className="breaking-ticker-track flex items-center gap-16 py-2.5 whitespace-nowrap">
             {doubled.map((h, i) => (
               <span
                 key={i}
