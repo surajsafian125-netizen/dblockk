@@ -55,7 +55,7 @@ const CosmicCommand = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative rounded-2xl overflow-hidden h-80 sm:h-96 group glass glow"
+      className="relative rounded-2xl overflow-hidden h-80 sm:h-96 group glow"
     >
       {/* Background image */}
       <img
@@ -65,22 +65,22 @@ const CosmicCommand = () => {
         loading="lazy"
       />
 
-      {/* Glass overlay */}
-      <div className="absolute inset-0 glass-strong" />
+      {/* Glass tint overlay */}
+      <div className="absolute inset-0 glass opacity-40" />
 
       {/* Dark gradient overlay from bottom */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
       {/* Top-right badge */}
       <div className="absolute top-4 right-4 z-10">
-        <span className="text-[10px] uppercase tracking-[0.2em] font-mono text-foreground/70 glass px-3 py-1 rounded-full">
+        <span className="text-[10px] uppercase tracking-[0.2em] font-mono text-foreground/80 glass-strong px-3 py-1 rounded-full shadow-lg">
           NASA · APOD
         </span>
       </div>
 
       {/* Bottom content */}
       <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 z-10">
-        <div className="glass-strong rounded-2xl p-4 sm:p-5 border border-border/20">
+        <div className="glass-strong rounded-2xl p-4 sm:p-5 border border-border/20 shadow-xl">
           <p className="font-mono text-[11px] text-foreground/50 uppercase tracking-[0.15em] mb-2">
             {new Date(apod.date).toLocaleDateString('en-US', {
               weekday: 'long',
