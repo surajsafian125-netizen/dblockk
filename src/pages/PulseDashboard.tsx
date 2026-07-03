@@ -15,6 +15,7 @@ import GeoIntelligenceHub from '@/components/GeoIntelligenceHub';
 import GlobalTrends from '@/components/GlobalTrends';
 import DailyTechLaunches from '@/components/DailyTechLaunches';
 import TechCategoryGrowth from '@/components/TechCategoryGrowth';
+import LocalPulse from '@/components/LocalPulse';
 import { Activity } from 'lucide-react';
 
 const PulseDashboard = () => {
