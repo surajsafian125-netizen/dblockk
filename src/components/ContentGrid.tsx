@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import ContentCard from './ContentCard';
 import PostDetailModal from './PostDetailModal';
 import { SkeletonGrid } from './SkeletonCard';
+import EmptyState from './EmptyState';
+import CategoryFilter from './CategoryFilter';
 import { supabase } from '@/integrations/supabase/client';
 import { useBookmarks } from '@/hooks/useBookmarks';
+import { Newspaper } from 'lucide-react';
 
 interface DBPost {
   id: string;
@@ -42,8 +45,7 @@ export interface PostDisplay {
 }
 
 const filters = ['Trending', 'Most Viewed', 'Latest', "Editor's Pick"];
-const categories = ['All', 'News', 'Hustle', 'Vibes'];
-const hashtags = ['#Business', '#Tech', '#Campus', '#Lifestyle', '#AI', '#Startup'];
+const PAGE_SIZE = 9;
 
 const ContentGrid = () => {
   const [activeFilter, setActiveFilter] = useState('Trending');
@@ -51,9 +53,11 @@ const ContentGrid = () => {
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [posts, setPosts] = useState<PostDisplay[]>([]);
   const [loading, setLoading] = useState(true);
+  const [visible, setVisible] = useState(PAGE_SIZE);
   const [selectedPost, setSelectedPost] = useState<PostDisplay | null>(null);
   const { bookmarkedIds, toggleBookmark } = useBookmarks();
   const [, setNow] = useState(Date.now());
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -62,7 +66,7 @@ const ContentGrid = () => {
         .select('*')
         .eq('published', true)
         .order('created_at', { ascending: false });
-      
+
       if (error) {
         console.error('Error fetching posts:', error);
         setLoading(false);
@@ -74,7 +78,9 @@ const ContentGrid = () => {
         title: p.title,
         description: p.description || p.content.slice(0, 120) + '...',
         content: p.content,
-        image: p.image_url || 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop',
+        image:
+          p.image_url ||
+          'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop',
         category: p.category,
         tags: p.tags || [],
         views: p.views || 0,
@@ -92,7 +98,6 @@ const ContentGrid = () => {
 
     fetchPosts();
 
-    // Realtime: refresh feed when posts change
     const channel = supabase
       .channel('posts-feed-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => {
@@ -100,7 +105,6 @@ const ContentGrid = () => {
       })
       .subscribe();
 
-    // Re-render every 60s so "time ago" labels stay current
     const tick = setInterval(() => setNow(Date.now()), 60_000);
 
     return () => {
@@ -109,19 +113,66 @@ const ContentGrid = () => {
     };
   }, []);
 
-  let filtered = [...posts];
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    posts.forEach(p => set.add(p.category));
+    return ['All', ...Array.from(set).sort()];
+  }, [posts]);
 
-  if (activeCategory !== 'All') {
-    filtered = filtered.filter(p => p.category.toLowerCase() === activeCategory.toLowerCase());
-  }
+  const hashtags = useMemo(() => {
+    const map = new Map<string, number>();
+    posts.forEach(p => p.tags.forEach(t => map.set(t, (map.get(t) || 0) + 1)));
+    return Array.from(map.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([t]) => `#${t}`);
+  }, [posts]);
 
-  if (activeTag) {
-    filtered = filtered.filter(p => p.tags.some(t => `#${t}` === activeTag));
-  }
+  const filtered = useMemo(() => {
+    let list = [...posts];
+    if (activeCategory !== 'All') {
+      list = list.filter(p => p.category.toLowerCase() === activeCategory.toLowerCase());
+    }
+    if (activeTag) {
+      list = list.filter(p => p.tags.some(t => `#${t}` === activeTag));
+    }
+    if (activeFilter === 'Trending') list.sort((a, b) => b.engagementScore - a.engagementScore);
+    else if (activeFilter === 'Most Viewed') list.sort((a, b) => b.views - a.views);
+    else if (activeFilter === 'Latest')
+      list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return list;
+  }, [posts, activeCategory, activeTag, activeFilter]);
 
-  if (activeFilter === 'Trending') filtered.sort((a, b) => b.engagementScore - a.engagementScore);
-  else if (activeFilter === 'Most Viewed') filtered.sort((a, b) => b.views - a.views);
-  else if (activeFilter === 'Latest') filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  // Reset pagination on filter change
+  useEffect(() => {
+    setVisible(PAGE_SIZE);
+  }, [activeCategory, activeTag, activeFilter]);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting) {
+          setVisible(v => Math.min(v + PAGE_SIZE, filtered.length));
+        }
+      },
+      { rootMargin: '400px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [filtered.length]);
+
+  const handleSelectRelated = useCallback(
+    (id: string) => {
+      const target = posts.find(p => p.id === id);
+      if (target) setSelectedPost(target);
+    },
+    [posts]
+  );
+
+  const shown = filtered.slice(0, visible);
 
   return (
     <section className="container mx-auto px-4 py-16">
@@ -134,18 +185,13 @@ const ContentGrid = () => {
         Explore <span className="text-primary text-glow">Content</span>
       </motion.h2>
 
-      <div className="flex items-center gap-2 mb-4 flex-wrap justify-center">
-        {categories.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
-              activeCategory === cat ? 'bg-primary text-primary-foreground glow' : 'glass glass-hover'
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
+      <div className="mb-4">
+        <CategoryFilter
+          categories={categories}
+          active={activeCategory}
+          onChange={setActiveCategory}
+          className="justify-center flex-wrap sm:flex-nowrap"
+        />
       </div>
 
       <div className="flex items-center gap-2 mb-4 flex-wrap justify-center">
@@ -154,7 +200,9 @@ const ContentGrid = () => {
             key={f}
             onClick={() => setActiveFilter(f)}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-              activeFilter === f ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground'
+              activeFilter === f
+                ? 'bg-accent text-accent-foreground'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             {f}
@@ -162,41 +210,65 @@ const ContentGrid = () => {
         ))}
       </div>
 
-      <div className="flex items-center gap-2 mb-8 flex-wrap justify-center">
-        {hashtags.map(tag => (
-          <button
-            key={tag}
-            onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-            className={`rounded-full px-3 py-1 text-xs transition-all ${
-              activeTag === tag ? 'bg-primary/20 text-primary neon-border' : 'text-muted-foreground hover:text-primary'
-            }`}
-          >
-            {tag}
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
-        <SkeletonGrid count={6} />
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((post, i) => (
-            <ContentCard
-              key={post.id}
-              post={post}
-              index={i}
-              onClick={() => setSelectedPost(post)}
-              isBookmarked={bookmarkedIds.has(post.id)}
-              onToggleBookmark={toggleBookmark}
-            />
+      {hashtags.length > 0 && (
+        <div className="flex items-center gap-2 mb-8 flex-wrap justify-center">
+          {hashtags.map(tag => (
+            <button
+              key={tag}
+              onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+              className={`rounded-full px-3 py-1 text-xs transition-all ${
+                activeTag === tag
+                  ? 'bg-primary/20 text-primary neon-border'
+                  : 'text-muted-foreground hover:text-primary'
+              }`}
+            >
+              {tag}
+            </button>
           ))}
         </div>
       )}
 
-      {!loading && filtered.length === 0 && (
-        <div className="text-center py-16 text-muted-foreground">
-          No posts found. Create some in the admin dashboard!
-        </div>
+      {loading ? (
+        <SkeletonGrid count={6} />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          icon={<Newspaper className="h-6 w-6" />}
+          title="Nothing here yet"
+          description="Try switching category or clearing your tag filter. Fresh drops arrive daily."
+          action={
+            (activeCategory !== 'All' || activeTag) && (
+              <button
+                onClick={() => {
+                  setActiveCategory('All');
+                  setActiveTag(null);
+                }}
+                className="rounded-xl glass glass-hover px-4 py-2 text-xs font-medium text-primary"
+              >
+                Reset filters
+              </button>
+            )
+          }
+        />
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {shown.map((post, i) => (
+              <ContentCard
+                key={post.id}
+                post={post}
+                index={i}
+                onClick={() => setSelectedPost(post)}
+                isBookmarked={bookmarkedIds.has(post.id)}
+                onToggleBookmark={toggleBookmark}
+              />
+            ))}
+          </div>
+          {visible < filtered.length && (
+            <div ref={sentinelRef} className="flex justify-center py-8">
+              <div className="h-6 w-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+            </div>
+          )}
+        </>
       )}
 
       <PostDetailModal
@@ -204,6 +276,7 @@ const ContentGrid = () => {
         onClose={() => setSelectedPost(null)}
         isBookmarked={selectedPost ? bookmarkedIds.has(selectedPost.id) : false}
         onToggleBookmark={toggleBookmark}
+        onSelectRelated={handleSelectRelated}
       />
     </section>
   );

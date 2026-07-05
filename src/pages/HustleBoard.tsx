@@ -6,6 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import ParticleBackground from '@/components/ParticleBackground';
 import Footer from '@/components/Footer';
+import EmptyState from '@/components/EmptyState';
+import CategoryFilter from '@/components/CategoryFilter';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -277,18 +279,13 @@ const HustleBoard = () => {
         {tab === 'community' && (
           <>
             {/* Filter tabs */}
-            <div className="flex items-center gap-2 mb-8 flex-wrap justify-center">
-              {['All', ...GIG_CATEGORIES].map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setFilterCat(cat)}
-                  className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
-                    filterCat === cat ? 'bg-primary text-primary-foreground glow' : 'glass glass-hover'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
+            <div className="mb-8 max-w-2xl mx-auto">
+              <CategoryFilter
+                categories={['All', ...GIG_CATEGORIES]}
+                active={filterCat}
+                onChange={setFilterCat}
+                className="justify-center"
+              />
             </div>
 
             {loading ? (
@@ -296,10 +293,19 @@ const HustleBoard = () => {
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
             ) : filteredGigs.length === 0 ? (
-              <div className="text-center py-16 text-muted-foreground">
-                <Briefcase className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                <p className="text-sm">No opportunities yet. Be the first to post!</p>
-              </div>
+              <EmptyState
+                icon={<Briefcase className="h-6 w-6" />}
+                title="No opportunities yet"
+                description="Be the first to post — hiring, looking for work, or open to collab."
+                action={
+                  <button
+                    onClick={() => setShowForm(true)}
+                    className="rounded-xl bg-primary text-primary-foreground px-4 py-2 text-xs font-medium glow"
+                  >
+                    Submit yours
+                  </button>
+                }
+              />
             ) : (
               <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
                 {filteredGigs.map((gig, i) => (
