@@ -1,10 +1,12 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Eye, Heart, Clock, TrendingUp, MessageCircle, Send, Bookmark, Share2 } from 'lucide-react';
+import { X, Eye, Clock, TrendingUp, MessageCircle, Send, Bookmark, ShieldCheck } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import StructuredArticle from './StructuredArticle';
+import ReactionsBar from './ReactionsBar';
+import ShareMenu from './ShareMenu';
+import RelatedPosts from './RelatedPosts';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { sharePost } from '@/lib/shareUtils';
 import type { PostDisplay } from './ContentGrid';
 
 interface Comment {
@@ -19,36 +21,21 @@ const PostDetailModal = ({
   onClose,
   isBookmarked,
   onToggleBookmark,
+  onSelectRelated,
 }: {
   post: PostDisplay | null;
   onClose: () => void;
   isBookmarked?: boolean;
   onToggleBookmark?: (postId: string) => void;
+  onSelectRelated?: (id: string) => void;
 }) => {
   const { user } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [liked, setLiked] = useState(false);
-  const [likes, setLikes] = useState(0);
 
   useEffect(() => {
     if (!post) return;
-    setLikes(post.likes);
-    setLiked(false);
-
-    if (user) {
-      supabase
-        .from('likes')
-        .select('id')
-        .eq('post_id', post.id)
-        .eq('user_id', user.id)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (data) setLiked(true);
-        });
-    }
-
     const fetchComments = async () => {
       const { data } = await supabase
         .from('comments')
@@ -58,24 +45,7 @@ const PostDetailModal = ({
       if (data) setComments(data);
     };
     fetchComments();
-  }, [post, user]);
-
-  const handleLike = async () => {
-    if (!user || !post) return;
-    if (liked) {
-      await supabase.from('likes').delete().eq('post_id', post.id).eq('user_id', user.id);
-      setLiked(false);
-      setLikes(prev => Math.max(0, prev - 1));
-      await supabase.from('posts').update({ likes_count: Math.max(0, likes - 1) }).eq('id', post.id);
-    } else {
-      const { error } = await supabase.from('likes').insert({ post_id: post.id, user_id: user.id });
-      if (!error) {
-        setLiked(true);
-        setLikes(prev => prev + 1);
-        await supabase.from('posts').update({ likes_count: likes + 1 }).eq('id', post.id);
-      }
-    }
-  };
+  }, [post]);
 
   const handleComment = async () => {
     if (!newComment.trim() || !user || !post) return;
@@ -121,58 +91,85 @@ const PostDetailModal = ({
 
             <div className="relative h-56 sm:h-64 overflow-hidden rounded-t-2xl">
               <img src={post.image} alt={post.title} className="w-full h-full object-cover" />
-              <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, hsl(var(--card) / 0.9), transparent 60%)' }} />
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: 'linear-gradient(to top, hsl(var(--card) / 0.9), transparent 60%)',
+                }}
+              />
             </div>
 
             <div className="p-6 -mt-10 relative">
+              {/* Source / author badge */}
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                <div className="inline-flex items-center gap-2 glass rounded-full pl-1 pr-3 py-1">
+                  <div className="h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold">
+                    DB
+                  </div>
+                  <span className="text-[11px] font-medium">D'Block Editorial</span>
+                  <ShieldCheck className="h-3 w-3 text-primary" />
+                </div>
+                <span className="text-[11px] text-muted-foreground uppercase tracking-wider">
+                  {post.category}
+                </span>
+              </div>
+
               <div className="flex flex-wrap gap-1.5 mb-3">
                 {post.tags.map(tag => (
-                  <span key={tag} className="text-xs text-primary/70 bg-primary/5 rounded-full px-2 py-0.5">#{tag}</span>
+                  <span
+                    key={tag}
+                    className="text-xs text-primary/70 bg-primary/5 rounded-full px-2 py-0.5"
+                  >
+                    #{tag}
+                  </span>
                 ))}
               </div>
 
               <h2 className="font-display text-2xl font-bold mb-3">{post.title}</h2>
 
               <div className="flex items-center gap-4 text-xs text-muted-foreground mb-5">
-                <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {post.views.toLocaleString()} views</span>
-                <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {post.readingTime}m read</span>
-                <span className="flex items-center gap-1 text-primary"><TrendingUp className="h-3 w-3" /> {post.engagementScore}%</span>
+                <span className="flex items-center gap-1">
+                  <Eye className="h-3 w-3" /> {post.views.toLocaleString()} views
+                </span>
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" /> {post.readingTime}m read
+                </span>
+                <span className="flex items-center gap-1 text-primary">
+                  <TrendingUp className="h-3 w-3" /> {post.engagementScore}%
+                </span>
               </div>
 
               <StructuredArticle content={post.content || post.description} title={post.title} />
 
+              <div className="mt-6 mb-5">
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">
+                  React to this
+                </p>
+                <ReactionsBar postId={post.id} compact={false} />
+              </div>
 
-              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-border/40">
-                <motion.button
-                  whileTap={{ scale: 1.2 }}
-                  onClick={handleLike}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                    liked ? 'bg-primary/15 text-primary' : 'glass glass-hover text-muted-foreground'
-                  }`}
-                >
-                  <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} />
-                  {likes} {likes === 1 ? 'Like' : 'Likes'}
-                </motion.button>
-
+              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-border/40 flex-wrap">
                 <motion.button
                   whileTap={{ scale: 1.2 }}
                   onClick={() => onToggleBookmark?.(post.id)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                    isBookmarked ? 'bg-primary/15 text-primary' : 'glass glass-hover text-muted-foreground'
+                    isBookmarked
+                      ? 'bg-primary/15 text-primary'
+                      : 'glass glass-hover text-muted-foreground'
                   }`}
                 >
                   <Bookmark className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`} />
                   {isBookmarked ? 'Stashed' : 'Stash'}
                 </motion.button>
 
-                <motion.button
-                  whileTap={{ scale: 1.2 }}
-                  onClick={() => sharePost(post.title, post.description, post.id)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium glass glass-hover text-muted-foreground transition-all"
-                >
-                  <Share2 className="h-4 w-4" />
-                  Share
-                </motion.button>
+                <div className="glass glass-hover rounded-xl px-4 py-2">
+                  <ShareMenu
+                    title={post.title}
+                    description={post.description}
+                    postId={post.id}
+                    compact={false}
+                  />
+                </div>
 
                 <span className="flex items-center gap-1 text-xs text-muted-foreground ml-auto">
                   <MessageCircle className="h-3.5 w-3.5" /> {comments.length} comments
@@ -208,6 +205,15 @@ const PostDetailModal = ({
                     <Send className="h-4 w-4" />
                   </motion.button>
                 </div>
+              )}
+
+              {onSelectRelated && (
+                <RelatedPosts
+                  postId={post.id}
+                  category={post.category}
+                  tags={post.tags}
+                  onSelect={onSelectRelated}
+                />
               )}
             </div>
           </motion.div>
