@@ -195,21 +195,45 @@ export type Database = {
         }
         Relationships: []
       }
+      digest_subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       likes: {
         Row: {
           created_at: string | null
+          emoji: string
           id: string
           post_id: string
           user_id: string
         }
         Insert: {
           created_at?: string | null
+          emoji?: string
           id?: string
           post_id: string
           user_id: string
         }
         Update: {
           created_at?: string | null
+          emoji?: string
           id?: string
           post_id?: string
           user_id?: string
