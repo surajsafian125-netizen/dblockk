@@ -6,6 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import ParticleBackground from '@/components/ParticleBackground';
 import Footer from '@/components/Footer';
+import EmptyState from '@/components/EmptyState';
+import CategoryFilter from '@/components/CategoryFilter';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
