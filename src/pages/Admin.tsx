@@ -88,6 +88,21 @@ const Admin = () => {
   const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(null);
   const [broadcastMsg, setBroadcastMsg] = useState('');
   const [broadcasting, setBroadcasting] = useState(false);
+  const [sendingDigest, setSendingDigest] = useState(false);
+
+  const sendWeeklyDigest = async () => {
+    setSendingDigest(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-weekly-digest');
+      if (error) throw error;
+      toast.success(`Digest sent to ${data?.sent ?? 0} subscriber${data?.sent === 1 ? '' : 's'}`);
+    } catch (e: any) {
+      console.error('[Digest] error', e);
+      toast.error(e?.message || 'Failed to send digest');
+    } finally {
+      setSendingDigest(false);
+    }
+  };
 
   // AI Draft Editor state
   const [draft, setDraft] = useState('');
@@ -969,6 +984,24 @@ const Admin = () => {
               Save Feed Settings
             </button>
           </div>
+        </motion.div>
+
+        {/* Weekly Digest Broadcast */}
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass glow rounded-2xl p-6 mb-6">
+          <h2 className="font-display text-lg font-semibold mb-2 flex items-center gap-2">
+            <Rss className="h-5 w-5 text-primary" /> Weekly Digest
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Manually dispatch the weekly digest email — top 5 recent posts — to all active subscribers via Resend.
+          </p>
+          <button
+            onClick={sendWeeklyDigest}
+            disabled={sendingDigest}
+            className="bg-primary text-primary-foreground rounded-xl px-5 py-2.5 text-sm font-medium hover:opacity-90 transition-all glow flex items-center gap-2 disabled:opacity-40"
+          >
+            {sendingDigest ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            {sendingDigest ? 'Dispatching…' : 'Broadcast Digest Now'}
+          </button>
         </motion.div>
 
         {/* Send Broadcast */}
