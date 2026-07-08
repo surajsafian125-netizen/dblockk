@@ -88,6 +88,21 @@ const Admin = () => {
   const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(null);
   const [broadcastMsg, setBroadcastMsg] = useState('');
   const [broadcasting, setBroadcasting] = useState(false);
+  const [sendingDigest, setSendingDigest] = useState(false);
+
+  const sendWeeklyDigest = async () => {
+    setSendingDigest(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-weekly-digest');
+      if (error) throw error;
+      toast.success(`Digest sent to ${data?.sent ?? 0} subscriber${data?.sent === 1 ? '' : 's'}`);
+    } catch (e: any) {
+      console.error('[Digest] error', e);
+      toast.error(e?.message || 'Failed to send digest');
+    } finally {
+      setSendingDigest(false);
+    }
+  };
 
   // AI Draft Editor state
   const [draft, setDraft] = useState('');
