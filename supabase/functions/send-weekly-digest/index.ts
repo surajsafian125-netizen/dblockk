@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
     </body></html>`;
 
     // TEST MODE: Resend sandbox only allows sending to the account owner's verified email.
-    const TEST_TO = 'surajmohammed129@gmail.com';
+    const TEST_TO = 'surajsafian125@gmail.com';
     const batch = [{
       from: 'D\'Block <onboarding@resend.dev>',
       to: [TEST_TO],
