@@ -62,13 +62,14 @@ Deno.serve(async (req) => {
       </table>
     </body></html>`;
 
-    // Batch send via Resend
-    const batch = emails.map(to => ({
-      from: "D'Block <onboarding@resend.dev>",
-      to: [to],
+    // TEST MODE: Resend sandbox only allows sending to the account owner's verified email.
+    const TEST_TO = 'surajmohammed129@gmail.com';
+    const batch = [{
+      from: 'D\'Block <onboarding@resend.dev>',
+      to: [TEST_TO],
       subject: "D'Block Weekly Digest — 5 signals to catch up on",
       html,
-    }));
+    }];
 
     const res = await fetch('https://api.resend.com/emails/batch', {
       method: 'POST',
