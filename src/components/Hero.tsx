@@ -23,7 +23,7 @@ const Hero = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.8 }}
         >
-          Welcome to D'Block.
+          D'Block.
         </motion.h1>
 
         <motion.p
@@ -32,7 +32,7 @@ const Hero = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.8 }}
         >
-          The definitive source for unfiltered news, industry launches, and the conversations shaping tomorrow.
+          The definitive source for unfiltered news, industry launches, and the conversations&nbsp;
         </motion.p>
 
         {isAuthenticated ? (
