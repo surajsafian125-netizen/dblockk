@@ -8,6 +8,7 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AnimatePresence, motion } from 'framer-motion';
 import AppSplash from "@/components/AppSplash";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import HustleBoard from "./pages/HustleBoard";
