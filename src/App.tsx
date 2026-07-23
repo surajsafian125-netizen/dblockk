@@ -8,6 +8,7 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AnimatePresence, motion } from 'framer-motion';
 import AppSplash from "@/components/AppSplash";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import HustleBoard from "./pages/HustleBoard";
@@ -45,9 +46,9 @@ const App = () => {
             {splashDone && (
               <BrowserRouter>
                 <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/hustle-board" element={<HustleBoard />} />
-                  <Route path="/pulse" element={<PulseDashboard />} />
+                  <Route path="/" element={<ProtectedRoute title="Welcome to D'Block" subtitle="Sign in to unlock the full feed — real-time news, AI stories, and community drops."><Index /></ProtectedRoute>} />
+                  <Route path="/hustle-board" element={<ProtectedRoute title="Hustle & Collab" subtitle="Log in to browse remote gigs and post community opportunities."><HustleBoard /></ProtectedRoute>} />
+                  <Route path="/pulse" element={<ProtectedRoute title="Pulse Hub" subtitle="Sign in to access live sports, crypto, and global intel."><PulseDashboard /></ProtectedRoute>} />
                   <Route path="/admin" element={<Admin />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
