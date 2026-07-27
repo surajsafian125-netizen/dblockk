@@ -636,7 +636,8 @@ const Admin = () => {
         });
         console.error('[Import News] Insert error:', error);
       } else {
-        toast.success(`Imported & formatted ${rows.length} articles!`, {
+        setDraftTab('global');
+        toast.success(`${rows.length} global drafts ready for review!`, {
           id: 'news-import-progress',
         });
         fetchPosts();
