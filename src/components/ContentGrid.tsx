@@ -86,6 +86,7 @@ const ContentGrid = () => {
           p.image_url ||
           'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop',
         category: p.category,
+        newsCategory: (p.news_category === 'local' || p.news_category === 'global') ? p.news_category : null,
         tags: p.tags || [],
         views: p.views || 0,
         likes: p.likes_count || 0,
