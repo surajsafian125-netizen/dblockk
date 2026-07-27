@@ -330,9 +330,10 @@ const Admin = () => {
   if (!isAdmin) return null;
 
   const togglePublish = async (post: DBPost) => {
-    const { error } = await supabase.from('posts').update({ published: !post.published }).eq('id', post.id);
+    const next = !post.published;
+    const { error } = await supabase.from('posts').update({ published: next, status: next ? 'published' : 'draft' }).eq('id', post.id);
     if (!error) {
-      setPosts(prev => prev.map(p => p.id === post.id ? { ...p, published: !p.published } : p));
+      setPosts(prev => prev.map(p => p.id === post.id ? { ...p, published: next, status: next ? 'published' : 'draft' } : p));
     }
   };
 
