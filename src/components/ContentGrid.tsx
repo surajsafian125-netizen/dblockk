@@ -24,6 +24,8 @@ interface DBPost {
   engagement_score: number | null;
   is_trending: boolean | null;
   published: boolean | null;
+  status?: string | null;
+  news_category?: string | null;
   created_at: string | null;
 }
 
@@ -34,6 +36,7 @@ export interface PostDisplay {
   content: string;
   image: string;
   category: string;
+  newsCategory: 'local' | 'global' | null;
   tags: string[];
   views: number;
   likes: number;
@@ -65,6 +68,7 @@ const ContentGrid = () => {
         .from('posts')
         .select('*')
         .eq('published', true)
+        .eq('status', 'published')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -82,6 +86,7 @@ const ContentGrid = () => {
           p.image_url ||
           'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop',
         category: p.category,
+        newsCategory: (p.news_category === 'local' || p.news_category === 'global') ? p.news_category : null,
         tags: p.tags || [],
         views: p.views || 0,
         likes: p.likes_count || 0,

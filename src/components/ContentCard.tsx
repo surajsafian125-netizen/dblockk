@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Eye, Clock, TrendingUp, Flame, Bookmark, ShieldCheck } from 'lucide-react';
+import { Eye, Clock, TrendingUp, Flame, Bookmark, ShieldCheck, MapPin, Globe } from 'lucide-react';
 import ReactionsBar from './ReactionsBar';
 import ShareMenu from './ShareMenu';
 import type { PostDisplay } from './ContentGrid';
@@ -76,6 +76,18 @@ const ContentCard = ({
         >
           {post.category.charAt(0).toUpperCase() + post.category.slice(1)}
         </div>
+        {post.newsCategory && (
+          <div
+            className={`absolute bottom-3 left-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium backdrop-blur-sm ${
+              post.newsCategory === 'local'
+                ? 'bg-accent/20 text-accent'
+                : 'bg-primary/20 text-primary'
+            }`}
+          >
+            {post.newsCategory === 'local' ? <MapPin className="h-3 w-3" /> : <Globe className="h-3 w-3" />}
+            {post.newsCategory === 'local' ? 'Local' : 'Global'}
+          </div>
+        )}
       </div>
 
       <div className="p-4 sm:p-5">
