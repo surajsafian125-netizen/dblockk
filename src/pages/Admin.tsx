@@ -813,6 +813,10 @@ const Admin = () => {
                 : 'Processing articles... Please wait to prevent API limits.'
               : 'Import Global News'}
           </button>
+          <button onClick={fetchLocalNews} disabled={fetchingLocal} className="border border-primary/40 bg-primary/10 text-primary rounded-xl px-4 py-2 text-sm font-medium hover:bg-primary/20 transition-all flex items-center gap-2 disabled:opacity-50">
+            {fetchingLocal ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
+            {fetchingLocal ? 'Fetching Ghana news…' : 'Generate Local News'}
+          </button>
           <button onClick={() => setShowAnalytics(!showAnalytics)} className="glass rounded-xl px-4 py-2 text-sm font-medium glass-hover transition-all flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-primary" /> Analytics Control
           </button>
