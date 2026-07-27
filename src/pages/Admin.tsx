@@ -501,6 +501,7 @@ const Admin = () => {
         ...postData,
         user_id: userData.user.id,
         published: true,
+        status: 'published',
       });
 
       if (error) {
