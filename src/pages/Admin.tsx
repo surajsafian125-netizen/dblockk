@@ -91,6 +91,53 @@ const Admin = () => {
   const [broadcastMsg, setBroadcastMsg] = useState('');
   const [broadcasting, setBroadcasting] = useState(false);
   const [sendingDigest, setSendingDigest] = useState(false);
+  const [fetchingLocal, setFetchingLocal] = useState(false);
+  const [draftTab, setDraftTab] = useState<'global' | 'local'>('global');
+
+  const fetchLocalNews = async () => {
+    setFetchingLocal(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-local-news');
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (data?.inserted > 0) {
+        toast.success(`${data.inserted} local Ghanaian article${data.inserted === 1 ? '' : 's'} saved as drafts`);
+        setDraftTab('local');
+      } else {
+        toast.info(data?.message || 'No new local articles found');
+      }
+      fetchPosts();
+    } catch (e: any) {
+      console.error('[Local News] error', e);
+      toast.error(e?.message || 'Failed to fetch local news');
+    } finally {
+      setFetchingLocal(false);
+    }
+  };
+
+  const publishDraftArticle = async (id: string) => {
+    const { error } = await supabase
+      .from('posts')
+      .update({ status: 'published', published: true })
+      .eq('id', id);
+    if (error) {
+      toast.error(formatSupabaseError(error));
+      return;
+    }
+    setPosts(prev => prev.map(p => (p.id === id ? { ...p, status: 'published', published: true } : p)));
+    toast.success('Published to Home 🚀');
+  };
+
+  const discardDraftArticle = async (id: string) => {
+    const { error } = await supabase.from('posts').delete().eq('id', id);
+    if (error) {
+      toast.error(formatSupabaseError(error));
+      return;
+    }
+    setPosts(prev => prev.filter(p => p.id !== id));
+    toast.success('Draft discarded');
+  };
+
 
   const sendWeeklyDigest = async () => {
     setSendingDigest(true);
