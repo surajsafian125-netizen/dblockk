@@ -24,6 +24,8 @@ interface DBPost {
   engagement_score: number | null;
   is_trending: boolean | null;
   published: boolean | null;
+  status?: string | null;
+  news_category?: string | null;
   created_at: string | null;
 }
 
@@ -34,6 +36,7 @@ export interface PostDisplay {
   content: string;
   image: string;
   category: string;
+  newsCategory: 'local' | 'global' | null;
   tags: string[];
   views: number;
   likes: number;
