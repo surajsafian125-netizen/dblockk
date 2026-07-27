@@ -763,6 +763,7 @@ const Admin = () => {
         image_url: imageUrl || null,
         user_id: userData.user.id,
         published: true,
+        status: 'published',
         views: 0,
         likes_count: 0,
         engagement_score: 0,
