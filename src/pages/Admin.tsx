@@ -841,6 +841,86 @@ const Admin = () => {
           </button>
         </div>
 
+        {/* News Curation Dashboard */}
+        {(() => {
+          const drafts = posts.filter(p => (p.status ?? (p.published ? 'published' : 'draft')) === 'draft');
+          const globalDrafts = drafts.filter(p => (p.news_category ?? 'global') === 'global');
+          const localDrafts = drafts.filter(p => p.news_category === 'local');
+          const active = draftTab === 'global' ? globalDrafts : localDrafts;
+
+          return (
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass glow rounded-2xl p-6 mb-6">
+              <h2 className="font-display text-lg font-semibold mb-4 flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" /> News Curation
+                <span className="text-xs text-muted-foreground font-normal ml-2">{drafts.length} draft{drafts.length === 1 ? '' : 's'} awaiting review</span>
+              </h2>
+
+              <div className="flex gap-2 mb-5 flex-wrap">
+                {([
+                  { key: 'global' as const, label: 'Draft Global News', icon: Globe, count: globalDrafts.length },
+                  { key: 'local' as const, label: 'Draft Local News', icon: MapPin, count: localDrafts.length },
+                ]).map(t => (
+                  <button
+                    key={t.key}
+                    onClick={() => setDraftTab(t.key)}
+                    className={`rounded-xl px-4 py-2 text-sm font-medium transition-all flex items-center gap-2 ${
+                      draftTab === t.key ? 'bg-primary/15 text-primary border border-primary/30' : 'glass glass-hover text-muted-foreground'
+                    }`}
+                  >
+                    <t.icon className="h-4 w-4" /> {t.label}
+                    <span className="text-[10px] rounded-full bg-secondary/60 px-2 py-0.5">{t.count}</span>
+                  </button>
+                ))}
+              </div>
+
+              {active.length === 0 ? (
+                <p className="text-muted-foreground text-sm text-center py-8">
+                  No {draftTab} drafts right now. Use the {draftTab === 'global' ? '“Import Global News”' : '“Generate Local News”'} button above to pull in fresh stories.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[32rem] overflow-y-auto pr-1">
+                  {active.map((d, i) => (
+                    <motion.div
+                      key={d.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.03 }}
+                      className="rounded-xl border border-border/30 bg-secondary/20 overflow-hidden flex flex-col"
+                    >
+                      {d.image_url && (
+                        <img src={d.image_url} alt={d.title} loading="lazy" className="h-32 w-full object-cover" />
+                      )}
+                      <div className="p-4 flex flex-col gap-2 flex-1">
+                        <span className={`self-start text-[10px] rounded-full px-2 py-0.5 font-medium ${
+                          d.news_category === 'local' ? 'bg-accent/15 text-accent' : 'bg-primary/15 text-primary'
+                        }`}>
+                          {d.news_category === 'local' ? 'Local · Ghana' : 'Global'}
+                        </span>
+                        <h3 className="font-medium text-sm leading-snug line-clamp-2">{d.title}</h3>
+                        <p className="text-xs text-muted-foreground line-clamp-3 flex-1">{d.description || d.content.slice(0, 160)}</p>
+                        <div className="flex gap-2 pt-1">
+                          <button
+                            onClick={() => publishDraftArticle(d.id)}
+                            className="flex-1 bg-primary text-primary-foreground rounded-lg px-3 py-1.5 text-xs font-medium hover:opacity-90 transition-all flex items-center justify-center gap-1.5"
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5" /> Publish to Home
+                          </button>
+                          <button
+                            onClick={() => discardDraftArticle(d.id)}
+                            className="border border-destructive/40 text-destructive bg-destructive/5 hover:bg-destructive/15 rounded-lg px-3 py-1.5 text-xs font-medium transition-all flex items-center gap-1.5"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" /> Delete
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          );
+        })()}
+
         {/* Security Terminal */}
         {showSecurity && <SecurityTerminal />}
 
