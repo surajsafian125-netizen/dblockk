@@ -68,6 +68,7 @@ const ContentGrid = () => {
         .from('posts')
         .select('*')
         .eq('published', true)
+        .eq('status', 'published')
         .order('created_at', { ascending: false });
 
       if (error) {
