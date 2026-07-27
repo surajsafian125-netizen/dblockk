@@ -306,8 +306,10 @@ export type Database = {
           image_url: string | null
           is_trending: boolean | null
           likes_count: number | null
+          news_category: string | null
           published: boolean | null
           reading_time: number | null
+          status: string
           tags: string[] | null
           title: string
           user_id: string
@@ -324,8 +326,10 @@ export type Database = {
           image_url?: string | null
           is_trending?: boolean | null
           likes_count?: number | null
+          news_category?: string | null
           published?: boolean | null
           reading_time?: number | null
+          status?: string
           tags?: string[] | null
           title: string
           user_id: string
@@ -342,8 +346,10 @@ export type Database = {
           image_url?: string | null
           is_trending?: boolean | null
           likes_count?: number | null
+          news_category?: string | null
           published?: boolean | null
           reading_time?: number | null
+          status?: string
           tags?: string[] | null
           title?: string
           user_id?: string
