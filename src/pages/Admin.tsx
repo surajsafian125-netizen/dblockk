@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Trash2, Edit, Eye, EyeOff, Send, Bot, Plus, Save, X, Upload, BarChart3, Newspaper, Loader2, Megaphone, Rss, Users, CheckCircle2, Briefcase, Check, XCircle, Shield, FileText, Sparkles } from 'lucide-react';
+import { Trash2, Edit, Eye, EyeOff, Send, Bot, Plus, Save, X, Upload, BarChart3, Newspaper, Loader2, Megaphone, Rss, Users, CheckCircle2, Briefcase, Check, XCircle, Shield, FileText, Sparkles, MapPin, Globe } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import Header from '@/components/Header';
 import SecurityTerminal from '@/components/SecurityTerminal';
