@@ -50,10 +50,21 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-        style={{ background: 'hsl(var(--background) / 0.72)', backdropFilter: 'blur(14px)' }}
+        className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-hidden"
         onClick={onClose}
       >
+        {/* Full-screen wallpaper backdrop */}
+        <img
+          src={loginWallpaper.url}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div
+          className="absolute inset-0"
+          style={{ background: 'hsl(var(--background) / 0.55)', backdropFilter: 'blur(4px)' }}
+        />
+
         <motion.div
           initial={{ scale: 0.94, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -119,7 +130,7 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
               aria-hidden="true"
               className="md:hidden absolute inset-0 w-full h-full object-cover"
             />
-            <div className="md:hidden absolute inset-0 bg-background/85 backdrop-blur-md" />
+            <div className="md:hidden absolute inset-0 bg-background/70 backdrop-blur-sm" />
             <div className="relative">
 
             <button
