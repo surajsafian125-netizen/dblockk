@@ -1,0 +1,1 @@
+CREATE POLICY "Admins read all posts" ON public.posts FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'::app_role));
