@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, User as UserIcon, Eye, EyeOff, Sparkles, ArrowRight, Loader2, ShieldCheck, Zap, Globe2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import loginWallpaper from '@/assets/login-wallpaper.jpeg.asset.json';
+
 
 interface AuthModalProps {
   mode: 'login' | 'signup' | null;
@@ -61,9 +63,16 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
           className="glass-strong glow rounded-3xl w-full max-w-4xl overflow-hidden grid md:grid-cols-[1.05fr_1fr] shadow-2xl relative"
         >
           {/* Left: brand panel (hidden on mobile) */}
-          <div className="hidden md:flex relative flex-col justify-between p-10 overflow-hidden bg-gradient-to-br from-primary/20 via-accent/10 to-transparent">
+          <div className="hidden md:flex relative flex-col justify-between p-10 overflow-hidden">
+            <img
+              src={loginWallpaper.url}
+              alt="Floodlit pitch at night"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-br from-background/85 via-background/60 to-primary/30" />
             <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-primary/30 blur-3xl" />
             <div className="absolute -bottom-32 -right-16 w-80 h-80 rounded-full bg-accent/20 blur-3xl" />
+
 
             <div className="relative">
               <div className="inline-flex items-center gap-2 glass rounded-full px-3 py-1 text-[11px] text-primary mb-6">
@@ -103,6 +112,16 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
 
           {/* Right: form */}
           <div className="relative p-6 sm:p-10">
+            {/* Mobile wallpaper backdrop */}
+            <img
+              src={loginWallpaper.url}
+              alt=""
+              aria-hidden="true"
+              className="md:hidden absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="md:hidden absolute inset-0 bg-background/85 backdrop-blur-md" />
+            <div className="relative">
+
             <button
               onClick={onClose}
               aria-label="Close"
@@ -197,7 +216,9 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
             <p className="text-[10px] text-center text-muted-foreground/70 mt-4 leading-relaxed">
               By continuing you agree to D'Block's Terms & Privacy Policy.
             </p>
+            </div>
           </div>
+
         </motion.div>
       </motion.div>
     </AnimatePresence>
