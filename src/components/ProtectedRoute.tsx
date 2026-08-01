@@ -32,11 +32,11 @@ const ProtectedRoute = ({
         src={loginWallpaper.url}
         alt=""
         aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+        className="fixed inset-0 w-full h-full object-cover pointer-events-none z-0"
       />
       <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ background: 'hsl(var(--background) / 0.55)', backdropFilter: 'blur(4px)' }}
+        className="fixed inset-0 pointer-events-none z-0"
+        style={{ background: 'linear-gradient(to bottom, hsl(var(--background) / 0.45), hsl(var(--background) / 0.7))' }}
       />
       <ParticleBackground />
       <Header />
