@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Header from './Header';
 import ParticleBackground from './ParticleBackground';
 import Footer from './Footer';
+import loginWallpaper from '@/assets/login-wallpaper.jpeg.asset.json';
 
 interface Props {
   children: ReactNode;
@@ -26,6 +27,17 @@ const ProtectedRoute = ({
 
   return (
     <div className="min-h-screen gradient-bg relative overflow-x-hidden">
+      {/* Full-screen wallpaper backdrop */}
+      <img
+        src={loginWallpaper.url}
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+      />
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: 'hsl(var(--background) / 0.55)', backdropFilter: 'blur(4px)' }}
+      />
       <ParticleBackground />
       <Header />
       <main className="relative z-10 flex items-center justify-center min-h-[100vh] px-4 pt-28 pb-16">
