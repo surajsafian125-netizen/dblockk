@@ -112,6 +112,16 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
 
           {/* Right: form */}
           <div className="relative p-6 sm:p-10">
+            {/* Mobile wallpaper backdrop */}
+            <img
+              src={loginWallpaper.url}
+              alt=""
+              aria-hidden="true"
+              className="md:hidden absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="md:hidden absolute inset-0 bg-background/85 backdrop-blur-md" />
+            <div className="relative">
+
             <button
               onClick={onClose}
               aria-label="Close"
