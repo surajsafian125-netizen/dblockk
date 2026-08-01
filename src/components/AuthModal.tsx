@@ -130,7 +130,7 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
               aria-hidden="true"
               className="md:hidden absolute inset-0 w-full h-full object-cover"
             />
-            <div className="md:hidden absolute inset-0 bg-background/85 backdrop-blur-md" />
+            <div className="md:hidden absolute inset-0 bg-background/70 backdrop-blur-sm" />
             <div className="relative">
 
             <button
