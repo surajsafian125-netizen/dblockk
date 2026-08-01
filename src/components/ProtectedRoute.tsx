@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Header from './Header';
 import ParticleBackground from './ParticleBackground';
 import Footer from './Footer';
+import loginWallpaper from '@/assets/login-wallpaper.jpeg.asset.json';
 
 interface Props {
   children: ReactNode;
