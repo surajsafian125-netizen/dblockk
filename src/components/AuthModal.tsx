@@ -216,7 +216,9 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
             <p className="text-[10px] text-center text-muted-foreground/70 mt-4 leading-relaxed">
               By continuing you agree to D'Block's Terms & Privacy Policy.
             </p>
+            </div>
           </div>
+
         </motion.div>
       </motion.div>
     </AnimatePresence>
