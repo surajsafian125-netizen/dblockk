@@ -5,6 +5,7 @@ import { Bookmark, Menu, X, Activity, Home, Newspaper, LayoutDashboard, Shield }
 import { useAuth } from '@/contexts/AuthContext';
 import ThemeToggle from './ThemeToggle';
 import AuthModal from './AuthModal';
+import TermsModal from './TermsModal';
 import NotificationBell from './NotificationBell';
 import MarqueeTicker from './MarqueeTicker';
 import MyStash from './MyStash';
