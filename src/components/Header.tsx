@@ -24,10 +24,19 @@ const Header = () => {
   const { bookmarkedIds, bookmarkedPosts, toggleBookmark, loading: stashLoading } = useBookmarks();
   const location = useLocation();
 
+  const requestAuth = (mode: 'login' | 'signup') => {
+    if (sessionStorage.getItem('dblock-terms-accepted') === '1') {
+      setAuthModal(mode);
+    } else {
+      setPendingAuth(mode);
+      setTermsOpen(true);
+    }
+  };
+
   useEffect(() => {
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      setAuthModal(detail);
+      const detail = (e as CustomEvent).detail as 'login' | 'signup';
+      requestAuth(detail);
     };
     window.addEventListener('open-auth', handler);
     return () => window.removeEventListener('open-auth', handler);
