@@ -226,13 +226,13 @@ const Header = () => {
                 ) : (
                   <div className="flex gap-3">
                     <button
-                      onClick={() => { setAuthModal('login'); setMobileOpen(false); }}
+                      onClick={() => { requestAuth('login'); setMobileOpen(false); }}
                       className="flex-1 glass rounded-xl py-2.5 text-sm text-center glass-hover transition-all"
                     >
                       Log In
                     </button>
                     <button
-                      onClick={() => { setAuthModal('signup'); setMobileOpen(false); }}
+                      onClick={() => { requestAuth('signup'); setMobileOpen(false); }}
                       className="flex-1 bg-primary text-primary-foreground rounded-xl py-2.5 text-sm text-center hover:opacity-90 transition-all glow"
                     >
                       Sign Up
