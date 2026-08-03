@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import DigestSignup from './DigestSignup';
 
 const Footer = () => {
@@ -5,9 +6,17 @@ const Footer = () => {
     <footer className="relative z-10 glass border-t border-border/10 mt-16">
       <div className="container mx-auto px-4 py-8 space-y-6">
         <DigestSignup />
-        <p className="text-sm text-muted-foreground text-center">
-          Designed and built by <span className="text-primary font-medium">Suraj</span>
-        </p>
+        <div className="flex flex-col items-center gap-2">
+          <Link
+            to="/legal"
+            className="text-xs text-muted-foreground hover:text-primary transition-colors"
+          >
+            Terms of Service &amp; Privacy Policy
+          </Link>
+          <p className="text-sm text-muted-foreground text-center">
+            Designed and built by <span className="text-primary font-medium">Suraj</span>
+          </p>
+        </div>
       </div>
     </footer>
   );

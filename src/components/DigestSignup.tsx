@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { Mail, Check, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,6 +10,8 @@ const DigestSignup = () => {
   const { user } = useAuth();
   const [subscribed, setSubscribed] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+
 
   useEffect(() => {
     if (!user) return;
@@ -25,10 +28,15 @@ const DigestSignup = () => {
       window.dispatchEvent(new CustomEvent('open-auth', { detail: 'login' }));
       return;
     }
+    if (!subscribed && !agreed) {
+      toast.error('Please accept the Terms of Service & Privacy Policy first.');
+      return;
+    }
     setBusy(true);
     if (subscribed) {
       await supabase.from('digest_subscribers').delete().eq('user_id', user.id);
       setSubscribed(false);
+      setAgreed(false);
       toast.success('Unsubscribed from the weekly digest');
     } else {
       const { error } = await supabase
@@ -54,16 +62,32 @@ const DigestSignup = () => {
         <p className="text-xs text-muted-foreground">
           The best hustles, drops and trends — once a week, straight to your inbox.
         </p>
+        {!subscribed && (
+          <label className="mt-3 flex items-start gap-2 text-[11px] text-muted-foreground cursor-pointer">
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-border accent-primary"
+            />
+            <span>
+              I agree to the{' '}
+              <Link to="/legal" className="text-primary hover:underline">
+                Terms of Service &amp; Privacy Policy
+              </Link>
+            </span>
+          </label>
+        )}
       </div>
       <motion.button
         whileTap={{ scale: 0.96 }}
         onClick={handle}
-        disabled={busy}
+        disabled={busy || (!subscribed && !agreed)}
         className={`rounded-xl px-4 py-2 text-xs font-medium inline-flex items-center gap-2 transition-all shrink-0 ${
           subscribed
             ? 'glass border border-primary/30 text-primary'
             : 'bg-primary text-primary-foreground glow'
-        } disabled:opacity-50`}
+        } disabled:opacity-50 disabled:cursor-not-allowed`}
       >
         {busy ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -77,6 +101,7 @@ const DigestSignup = () => {
       </motion.button>
     </div>
   );
+
 };
 
 export default DigestSignup;
