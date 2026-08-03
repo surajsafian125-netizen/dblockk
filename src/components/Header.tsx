@@ -246,6 +246,16 @@ const Header = () => {
       </AnimatePresence>
 
       <MarqueeTicker />
+      <TermsModal
+        open={termsOpen}
+        onAccept={() => {
+          sessionStorage.setItem('dblock-terms-accepted', '1');
+          setTermsOpen(false);
+          if (pendingAuth) setAuthModal(pendingAuth);
+          setPendingAuth(null);
+        }}
+        onClose={() => { setTermsOpen(false); setPendingAuth(null); }}
+      />
       <AuthModal mode={authModal} onClose={() => setAuthModal(null)} onSwitch={setAuthModal} />
       <MyStash
         open={stashOpen}
