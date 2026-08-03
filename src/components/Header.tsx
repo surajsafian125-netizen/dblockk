@@ -16,6 +16,8 @@ import type { PostDisplay } from './ContentGrid';
 const Header = () => {
   const { isAuthenticated, user, logout, isAdmin } = useAuth();
   const [authModal, setAuthModal] = useState<'login' | 'signup' | null>(null);
+  const [pendingAuth, setPendingAuth] = useState<'login' | 'signup' | null>(null);
+  const [termsOpen, setTermsOpen] = useState(false);
   const [stashOpen, setStashOpen] = useState(false);
   const [stashPost, setStashPost] = useState<PostDisplay | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
