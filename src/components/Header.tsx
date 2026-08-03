@@ -5,6 +5,7 @@ import { Bookmark, Menu, X, Activity, Home, Newspaper, LayoutDashboard, Shield }
 import { useAuth } from '@/contexts/AuthContext';
 import ThemeToggle from './ThemeToggle';
 import AuthModal from './AuthModal';
+import TermsModal from './TermsModal';
 import NotificationBell from './NotificationBell';
 import MarqueeTicker from './MarqueeTicker';
 import MyStash from './MyStash';
@@ -15,16 +16,27 @@ import type { PostDisplay } from './ContentGrid';
 const Header = () => {
   const { isAuthenticated, user, logout, isAdmin } = useAuth();
   const [authModal, setAuthModal] = useState<'login' | 'signup' | null>(null);
+  const [pendingAuth, setPendingAuth] = useState<'login' | 'signup' | null>(null);
+  const [termsOpen, setTermsOpen] = useState(false);
   const [stashOpen, setStashOpen] = useState(false);
   const [stashPost, setStashPost] = useState<PostDisplay | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { bookmarkedIds, bookmarkedPosts, toggleBookmark, loading: stashLoading } = useBookmarks();
   const location = useLocation();
 
+  const requestAuth = (mode: 'login' | 'signup') => {
+    if (sessionStorage.getItem('dblock-terms-accepted') === '1') {
+      setAuthModal(mode);
+    } else {
+      setPendingAuth(mode);
+      setTermsOpen(true);
+    }
+  };
+
   useEffect(() => {
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      setAuthModal(detail);
+      const detail = (e as CustomEvent).detail as 'login' | 'signup';
+      requestAuth(detail);
     };
     window.addEventListener('open-auth', handler);
     return () => window.removeEventListener('open-auth', handler);
@@ -117,13 +129,13 @@ const Header = () => {
             ) : (
               <>
                 <button
-                  onClick={() => setAuthModal('login')}
+                  onClick={() => requestAuth('login')}
                   className="glass rounded-lg px-4 py-1.5 text-sm glass-hover transition-all"
                 >
                   Log In
                 </button>
                 <button
-                  onClick={() => setAuthModal('signup')}
+                  onClick={() => requestAuth('signup')}
                   className="bg-primary text-primary-foreground rounded-lg px-4 py-1.5 text-sm hover:opacity-90 transition-all glow"
                 >
                   Sign Up
@@ -214,13 +226,13 @@ const Header = () => {
                 ) : (
                   <div className="flex gap-3">
                     <button
-                      onClick={() => { setAuthModal('login'); setMobileOpen(false); }}
+                      onClick={() => { requestAuth('login'); setMobileOpen(false); }}
                       className="flex-1 glass rounded-xl py-2.5 text-sm text-center glass-hover transition-all"
                     >
                       Log In
                     </button>
                     <button
-                      onClick={() => { setAuthModal('signup'); setMobileOpen(false); }}
+                      onClick={() => { requestAuth('signup'); setMobileOpen(false); }}
                       className="flex-1 bg-primary text-primary-foreground rounded-xl py-2.5 text-sm text-center hover:opacity-90 transition-all glow"
                     >
                       Sign Up
@@ -234,6 +246,16 @@ const Header = () => {
       </AnimatePresence>
 
       <MarqueeTicker />
+      <TermsModal
+        open={termsOpen}
+        onAccept={() => {
+          sessionStorage.setItem('dblock-terms-accepted', '1');
+          setTermsOpen(false);
+          if (pendingAuth) setAuthModal(pendingAuth);
+          setPendingAuth(null);
+        }}
+        onClose={() => { setTermsOpen(false); setPendingAuth(null); }}
+      />
       <AuthModal mode={authModal} onClose={() => setAuthModal(null)} onSwitch={setAuthModal} />
       <MyStash
         open={stashOpen}
