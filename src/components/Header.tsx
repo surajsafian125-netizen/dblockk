@@ -129,13 +129,13 @@ const Header = () => {
             ) : (
               <>
                 <button
-                  onClick={() => setAuthModal('login')}
+                  onClick={() => requestAuth('login')}
                   className="glass rounded-lg px-4 py-1.5 text-sm glass-hover transition-all"
                 >
                   Log In
                 </button>
                 <button
-                  onClick={() => setAuthModal('signup')}
+                  onClick={() => requestAuth('signup')}
                   className="bg-primary text-primary-foreground rounded-lg px-4 py-1.5 text-sm hover:opacity-90 transition-all glow"
                 >
                   Sign Up
