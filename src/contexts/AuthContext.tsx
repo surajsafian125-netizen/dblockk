@@ -9,6 +9,7 @@ interface AuthContextType {
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<{ error?: string }>;
   signup: (name: string, email: string, password: string) => Promise<{ error?: string }>;
+  loginWithGoogle: () => Promise<{ error?: string }>;
   logout: () => Promise<void>;
 }
 
@@ -118,6 +119,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return {};
   };
 
+  const loginWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/`,
+        queryParams: { access_type: 'offline', prompt: 'consent' },
+      },
+    });
+    if (error) return { error: error.message };
+    return {};
+  };
+
   const logout = async () => {
     // Clear local state first to prevent any guarded UI from re-firing
     lastUserIdRef.current = null;
@@ -135,6 +148,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isAdmin,
       login,
       signup,
+      loginWithGoogle,
       logout,
     }}>
       {!isLoading && children}
