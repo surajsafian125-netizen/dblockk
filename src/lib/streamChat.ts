@@ -1,3 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
+
 export type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ask-ai`;
@@ -11,16 +13,25 @@ export async function streamChat({
   onDelta: (deltaText: string) => void;
   onDone: () => void;
 }) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error("Please sign in to use the assistant");
+  }
+
   let resp: Response;
   try {
     resp = await fetch(CHAT_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
       body: JSON.stringify({ messages }),
     });
   } catch (networkErr: any) {
     throw new Error(networkErr?.message || "Could not reach the assistant");
   }
+
 
   if (!resp.ok) {
     let errMsg = `Request failed (${resp.status})`;

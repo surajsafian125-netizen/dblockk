@@ -1,3 +1,4 @@
+import { getUser, unauthorized } from "../_shared/auth.ts";
 // Edge function: proxy to free-api-live-football-data on RapidAPI
 // Automated live football dashboard data (live matches, match details, top players)
 
@@ -26,6 +27,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+
+  const user = await getUser(req);
+  if (!user) return unauthorized(corsHeaders);
+
 
   try {
     const apiKey = Deno.env.get("RAPIDAPI_FOOTBALL_KEY");

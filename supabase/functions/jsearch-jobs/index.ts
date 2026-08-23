@@ -1,3 +1,4 @@
+import { getUser, unauthorized } from '../_shared/auth.ts';
 // Securely fetch remote/freelance jobs from JSearch (RapidAPI).
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,6 +8,10 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+
+  const user = await getUser(req);
+  if (!user) return unauthorized(corsHeaders);
+
 
   try {
     const apiKey = Deno.env.get('JSEARCH_API_KEY');
