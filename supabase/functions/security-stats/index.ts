@@ -1,3 +1,4 @@
+import { getAdminUser, unauthorized } from '../_shared/auth.ts';
 // Real project stats from Supabase (auth + public tables) using service role.
 import { createClient } from 'npm:@supabase/supabase-js@2.45.0';
 
@@ -23,6 +24,10 @@ const fmtTime = (iso: string) => new Date(iso).toISOString().split('T')[1].split
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+
+  const admin = await getAdminUser(req);
+  if (!admin) return unauthorized(corsHeaders);
+
 
   try {
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();

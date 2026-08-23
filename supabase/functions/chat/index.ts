@@ -1,3 +1,4 @@
+import { getUser, unauthorized } from "../_shared/auth.ts";
 import { STATUS_CODE } from "https://deno.land/std@0.224.0/http/status.ts";
 
 const corsHeaders = {
@@ -98,6 +99,10 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return jsonResponse("Method not allowed", STATUS_CODE.MethodNotAllowed);
   }
+
+  const user = await getUser(req);
+  if (!user) return unauthorized(corsHeaders);
+
 
   try {
     const apiKey = Deno.env.get("GEMINI_API_KEY");
