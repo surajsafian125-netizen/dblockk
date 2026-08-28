@@ -220,3 +220,34 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--primary) / 0.5);
 }
+/* ---- Live wallpaper ---- */
+@keyframes ken-burns {
+  0%   { transform: scale(1.08) translate3d(0, 0, 0); }
+  50%  { transform: scale(1.18) translate3d(-2%, -1.5%, 0); }
+  100% { transform: scale(1.08) translate3d(0, 0, 0); }
+}
+@keyframes aurora-drift {
+  0%   { transform: translate3d(-6%, -4%, 0) scale(1.1); opacity: 0.55; }
+  50%  { transform: translate3d(6%, 4%, 0) scale(1.25); opacity: 0.85; }
+  100% { transform: translate3d(-6%, -4%, 0) scale(1.1); opacity: 0.55; }
+}
+
+.wallpaper-kenburns {
+  animation: ken-burns 38s ease-in-out infinite;
+  will-change: transform;
+}
+
+.wallpaper-aurora {
+  background:
+    radial-gradient(45% 40% at 20% 25%, hsl(var(--primary) / 0.22), transparent 70%),
+    radial-gradient(40% 45% at 80% 70%, hsl(var(--glow) / 0.18), transparent 70%);
+  animation: aurora-drift 26s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+html.has-wallpaper body { background-color: transparent; }
+html.has-wallpaper .gradient-bg { background: transparent !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .wallpaper-kenburns, .wallpaper-aurora { animation: none; }
+}

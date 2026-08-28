@@ -6,8 +6,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { WallpaperProvider } from "@/contexts/WallpaperContext";
 import { AnimatePresence, motion } from 'framer-motion';
 import AppSplash from "@/components/AppSplash";
+import LiveWallpaper from "@/components/LiveWallpaper";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
@@ -30,7 +32,9 @@ const App = () => {
     <ThemeProvider attribute="class" defaultTheme="dark">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
+          <WallpaperProvider>
           <TooltipProvider>
+            <LiveWallpaper />
             <Toaster />
             <Sonner />
             <AnimatePresence>
@@ -57,6 +61,7 @@ const App = () => {
               </BrowserRouter>
             )}
           </TooltipProvider>
+          </WallpaperProvider>
         </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>
