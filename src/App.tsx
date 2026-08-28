@@ -61,6 +61,7 @@ const App = () => {
               </BrowserRouter>
             )}
           </TooltipProvider>
+          </WallpaperProvider>
         </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>
