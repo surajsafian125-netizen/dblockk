@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Bookmark, Menu, X, Activity, Home, Newspaper, LayoutDashboard, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import ThemeToggle from './ThemeToggle';
+import WallpaperPicker from './WallpaperPicker';
 import AuthModal from './AuthModal';
 import TermsModal from './TermsModal';
 import NotificationBell from './NotificationBell';
@@ -102,6 +103,7 @@ const Header = () => {
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
             <ThemeToggle />
+            {isAuthenticated && <WallpaperPicker />}
             {isAuthenticated ? (
               <>
                 <NotificationBell />
@@ -147,6 +149,7 @@ const Header = () => {
           {/* Mobile: minimal actions + hamburger */}
           <div className="flex md:hidden items-center gap-2">
             <ThemeToggle />
+            {isAuthenticated && <WallpaperPicker />}
             {isAuthenticated && <NotificationBell />}
             <button
               data-hamburger
