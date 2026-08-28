@@ -32,7 +32,9 @@ const App = () => {
     <ThemeProvider attribute="class" defaultTheme="dark">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
+          <WallpaperProvider>
           <TooltipProvider>
+            <LiveWallpaper />
             <Toaster />
             <Sonner />
             <AnimatePresence>
