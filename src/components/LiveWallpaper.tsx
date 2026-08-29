@@ -49,6 +49,40 @@ const LiveWallpaper = () => {
         }}
       />
       <div className="absolute inset-0 wallpaper-aurora" />
+
+      {/* Themed motion overlays */}
+      {activeId === 'ocean' && (
+        <div className="absolute inset-0 overflow-hidden">
+          {[...Array(14)].map((_, i) => (
+            <span
+              key={i}
+              className="wallpaper-bubble"
+              style={{
+                left: `${(i * 37) % 100}%`,
+                width: `${6 + ((i * 13) % 14)}px`,
+                height: `${6 + ((i * 13) % 14)}px`,
+                animationDuration: `${9 + ((i * 7) % 10)}s`,
+                animationDelay: `${-((i * 3.1) % 12)}s`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+      {activeId === 'desert' && (
+        <div className="absolute inset-0 overflow-hidden">
+          {[...Array(10)].map((_, i) => (
+            <span
+              key={i}
+              className="wallpaper-sand"
+              style={{
+                top: `${(i * 11) % 100}%`,
+                animationDuration: `${5 + ((i * 3) % 6)}s`,
+                animationDelay: `${-((i * 1.7) % 8)}s`,
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
