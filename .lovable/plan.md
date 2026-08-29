@@ -1,65 +1,33 @@
+# D'Block: Profiles, Discovery, Ops & Trust
 
-# Site Enhancement Plan — All 4 Tracks
+A large scope — proposed as four shippable phases. Each phase is independently useful, and I'll build them in order unless you want to reorder or drop items.
 
-Delivering every suggestion in one pass, ordered so shared primitives land first.
+## Phase 1 — Identity & Retention
+- **Profiles table** (display name, handle, avatar, bio, joined date) auto-created on signup via trigger.
+- **Public profile page** `/u/:handle` — joined date, reaction/bookmark counts, and a public activity strip (bookmarked + reacted articles). Users control visibility with a "public profile" toggle.
+- **Reading streak** — daily read events recorded per user; a subtle flame badge in the header showing "X-day streak", with the longest streak on the profile.
 
-## 1. Pulse Hub Resilience
-- Add a reusable `WidgetShell` wrapper (glass card + header slot) exposing:
-  - `lastUpdated` timestamp ("Updated 12s ago", auto-tick)
-  - Refresh button (spinner while loading)
-  - Error state with retry (keeps glass aesthetic, no raw error strings)
-- Wire into: `ProMatchCenter`, `CryptoTerminal`, `LocalPulse`, `GlobalTrends`, `TechCategoryGrowth`, `DailyTechLaunches`, `CosmicCommand`, `GlobalHubs`, `GeoIntelligenceHub`, `BreakingNewsTicker`.
-- Standardise fetch hooks to return `{ data, loading, error, refetch, updatedAt }`.
+## Phase 2 — Discovery
+- **For You feed** — a ranked tab on the home feed scoring posts by the categories/tags the user reacts to and bookmarks, blended with recency so it never goes stale.
+- **Tag pages** `/tag/:tag` and category pages with their own feeds and headers.
+- **Trending tags cloud** — tag frequency weighted by recent engagement, rendered as a clickable cloud on the home page and Pulse Hub.
+- **Full-text search** `/search` — Postgres full-text index over post title/description/content, with filters for category, date range, and source/news_category.
 
-## 2. Content Trust & Discovery
-- **Source/author badges** on `ContentCard` and inside the reading modal (author avatar/initials + source domain pill).
-- **Related posts strip** at the bottom of the reading modal: query 3 posts sharing the primary category/tag, excluding current.
-- **Category filters** on Hustle Board and main feed: horizontally scrollable glass chips derived from distinct `posts.category` values, with an "All" reset.
+## Phase 3 — Admin & Ops
+- **Scheduled publishing** — a `publish_at` timestamp on drafts; a scheduled edge function flips due drafts to published. Admin gets a date/time picker alongside the existing publish action.
+- **Content calendar** — month view in Admin showing scheduled and published posts, click a day to see or reschedule items.
+- **Analytics dashboard (real data)** — views, top articles, reactions, bookmarks, comments, and subscriber growth charted from your own tables (replaces the manually-overridden numbers).
 
-## 3. Engagement
-- **Reactions**: extend `likes` table usage with an optional `emoji` column (🔥 🚀 💡 ❤). Migration + RLS + grants. Render as glass chip row on each card with counts and toggle-per-user-per-emoji.
-- **Share menu**: dropdown on card ("Copy link", "Twitter/X", "WhatsApp", "LinkedIn", native Web Share when available). Uses existing share util.
-- **Weekly digest signup**: small glass CTA in footer / sidebar; writes to `notifications` with `type='digest_subscribe'` for the admin to broadcast weekly.
+## Phase 4 — Trust & Distribution
+- **Report button** on posts and comments, writing to a `reports` table, surfaced as a moderation queue in Admin (dismiss / delete content / note).
+- **RSS out-feed** — a public `rss.xml` edge function serving the latest published posts as valid RSS 2.0, linked in the footer and `<head>`.
 
-## 4. UX Polish
-- **Infinite scroll** on `ContentGrid`: IntersectionObserver-based pagination replacing static pages; keep skeletons.
-- **Empty-state illustrations**: reusable `EmptyState` component (glass card, animated glyph, CTA) used by feed, Hustle Board, bookmarks, notifications.
-- **Mobile card density**: tighten `ContentCard` padding/typography under `sm`, 2-line title clamp, compact meta row.
+## Technical notes
+- New tables: `profiles`, `reading_streaks` (or `reading_events`), `post_reports`, plus `publish_at` on `posts`. Every table gets explicit GRANTs and RLS: profiles readable publicly only when the user opts in, streaks/reports owner-or-admin scoped, reports insertable by any authenticated user.
+- Search uses a generated `tsvector` column + GIN index, queried through a security-definer RPC so it stays fast and RLS-safe (published posts only).
+- Scheduling and RSS are Supabase edge functions; the scheduler runs on a cron trigger.
+- All new UI follows the existing glassmorphism system (`glass` / `glass-strong`, Framer Motion transitions, no hardcoded colors), and works down to 375px with no horizontal overflow.
+- No mock data anywhere — every widget reads live tables.
 
-## Technical Notes
-
-### New/edited files (high level)
-```text
-src/components/pulse/WidgetShell.tsx          NEW
-src/hooks/useResilientFetch.ts                NEW
-src/components/EmptyState.tsx                 NEW
-src/components/ReactionsBar.tsx               NEW
-src/components/ShareMenu.tsx                  NEW
-src/components/CategoryFilter.tsx             NEW
-src/components/RelatedPosts.tsx               NEW
-src/components/ContentCard.tsx                edit (badges, reactions, share, density)
-src/components/ContentGrid.tsx                edit (infinite scroll, filter, empty)
-src/components/reading/ReadingModal.tsx       edit (badges + related strip)
-src/pages/HustleBoard.tsx                     edit (filter + empty state)
-src/components/pulse/*.tsx                    edit (adopt WidgetShell)
-src/pages/PulseDashboard.tsx                  minor tweaks
-```
-
-### Migration
-```sql
-ALTER TABLE public.likes
-  ADD COLUMN IF NOT EXISTS emoji text NOT NULL DEFAULT 'like';
--- Drop old unique(user_id, post_id) if present and replace with (user_id, post_id, emoji)
-```
-Preserve existing grants/policies; add index on `(post_id, emoji)`.
-
-### Non-goals
-- No backend rewrite of edge functions beyond adding cache headers if trivial.
-- No redesign of Pulse layout order (kept from previous turn).
-- No new external API providers.
-
-## Rollout Order
-1. Migration (`likes.emoji`) + shared primitives (`WidgetShell`, `useResilientFetch`, `EmptyState`, `ReactionsBar`, `ShareMenu`, `CategoryFilter`, `RelatedPosts`).
-2. Wire Pulse widgets to `WidgetShell`.
-3. Update `ContentCard`, `ContentGrid`, `ReadingModal`, `HustleBoard`.
-4. Verify build + quick preview check.
+## Order of work
+I'll start with Phase 1 and check in after each phase so you can review before I continue.
