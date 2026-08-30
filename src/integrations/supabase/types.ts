@@ -295,6 +295,57 @@ export type Database = {
         }
         Relationships: []
       }
+      post_reports: {
+        Row: {
+          comment_id: string | null
+          created_at: string
+          details: string | null
+          id: string
+          post_id: string | null
+          reason: string
+          reporter_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          post_id?: string | null
+          reason: string
+          reporter_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          post_id?: string | null
+          reason?: string
+          reporter_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_reports_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_reports_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
           category: string
@@ -307,8 +358,10 @@ export type Database = {
           is_trending: boolean | null
           likes_count: number | null
           news_category: string | null
+          publish_at: string | null
           published: boolean | null
           reading_time: number | null
+          search_vector: unknown
           status: string
           tags: string[] | null
           title: string
@@ -327,8 +380,10 @@ export type Database = {
           is_trending?: boolean | null
           likes_count?: number | null
           news_category?: string | null
+          publish_at?: string | null
           published?: boolean | null
           reading_time?: number | null
+          search_vector?: unknown
           status?: string
           tags?: string[] | null
           title: string
@@ -347,14 +402,76 @@ export type Database = {
           is_trending?: boolean | null
           likes_count?: number | null
           news_category?: string | null
+          publish_at?: string | null
           published?: boolean | null
           reading_time?: number | null
+          search_vector?: unknown
           status?: string
           tags?: string[] | null
           title?: string
           user_id?: string
           video_url?: string | null
           views?: number | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          display_name: string | null
+          handle: string
+          id: string
+          is_public: boolean
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          handle: string
+          id: string
+          is_public?: boolean
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          handle?: string
+          id?: string
+          is_public?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reading_streaks: {
+        Row: {
+          created_at: string
+          current_streak: number
+          last_read_date: string | null
+          longest_streak: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          last_read_date?: string | null
+          longest_streak?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          last_read_date?: string | null
+          longest_streak?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -414,6 +531,117 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      public_profile_activity: {
+        Args: { p_limit?: number; p_user_id: string }
+        Returns: {
+          category: string
+          content: string
+          created_at: string | null
+          description: string | null
+          engagement_score: number | null
+          id: string
+          image_url: string | null
+          is_trending: boolean | null
+          likes_count: number | null
+          news_category: string | null
+          publish_at: string | null
+          published: boolean | null
+          reading_time: number | null
+          search_vector: unknown
+          status: string
+          tags: string[] | null
+          title: string
+          user_id: string
+          video_url: string | null
+          views: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "posts"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      public_profile_stats: {
+        Args: { p_user_id: string }
+        Returns: {
+          bookmark_count: number
+          comment_count: number
+          reaction_count: number
+        }[]
+      }
+      publish_due_posts: { Args: never; Returns: number }
+      record_read: {
+        Args: never
+        Returns: {
+          created_at: string
+          current_streak: number
+          last_read_date: string | null
+          longest_streak: number
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "reading_streaks"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      search_posts: {
+        Args: {
+          p_category?: string
+          p_from?: string
+          p_limit?: number
+          p_news_category?: string
+          p_offset?: number
+          p_to?: string
+          q?: string
+        }
+        Returns: {
+          category: string
+          content: string
+          created_at: string | null
+          description: string | null
+          engagement_score: number | null
+          id: string
+          image_url: string | null
+          is_trending: boolean | null
+          likes_count: number | null
+          news_category: string | null
+          publish_at: string | null
+          published: boolean | null
+          reading_time: number | null
+          search_vector: unknown
+          status: string
+          tags: string[] | null
+          title: string
+          user_id: string
+          video_url: string | null
+          views: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "posts"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      trending_tags: {
+        Args: { p_days?: number; p_limit?: number }
+        Returns: {
+          score: number
+          tag: string
+          uses: number
+        }[]
+      }
+      user_taste: {
+        Args: { p_user_id: string }
+        Returns: {
+          category: string
+          weight: number
+        }[]
       }
     }
     Enums: {
