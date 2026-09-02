@@ -53,7 +53,9 @@ const filters = ['For You', 'Trending', 'Most Viewed', 'Latest', "Editor's Pick"
 const PAGE_SIZE = 9;
 
 const ContentGrid = () => {
-  const [activeFilter, setActiveFilter] = useState('Trending');
+  const { user } = useAuth();
+  const [activeFilter, setActiveFilter] = useState(user ? 'For You' : 'Trending');
+
   const [activeCategory, setActiveCategory] = useState('All');
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [posts, setPosts] = useState<PostDisplay[]>([]);
