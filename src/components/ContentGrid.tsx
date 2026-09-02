@@ -49,7 +49,7 @@ export interface PostDisplay {
   published: boolean;
 }
 
-const filters = ['Trending', 'Most Viewed', 'Latest', "Editor's Pick"];
+const filters = ['For You', 'Trending', 'Most Viewed', 'Latest', "Editor's Pick"];
 const PAGE_SIZE = 9;
 
 const ContentGrid = () => {
