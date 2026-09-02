@@ -8,6 +8,8 @@ import CategoryFilter from './CategoryFilter';
 import { supabase } from '@/integrations/supabase/client';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { Newspaper } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+
 
 interface DBPost {
   id: string;
@@ -47,18 +49,22 @@ export interface PostDisplay {
   published: boolean;
 }
 
-const filters = ['Trending', 'Most Viewed', 'Latest', "Editor's Pick"];
+const filters = ['For You', 'Trending', 'Most Viewed', 'Latest', "Editor's Pick"];
 const PAGE_SIZE = 9;
 
 const ContentGrid = () => {
-  const [activeFilter, setActiveFilter] = useState('Trending');
+  const { user } = useAuth();
+  const [activeFilter, setActiveFilter] = useState(user ? 'For You' : 'Trending');
+
   const [activeCategory, setActiveCategory] = useState('All');
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [posts, setPosts] = useState<PostDisplay[]>([]);
   const [loading, setLoading] = useState(true);
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [selectedPost, setSelectedPost] = useState<PostDisplay | null>(null);
-  const { bookmarkedIds, toggleBookmark } = useBookmarks();
+  const { bookmarkedIds, bookmarkedPosts, toggleBookmark } = useBookmarks();
+  const [taste, setTaste] = useState<Record<string, number>>({});
+
   const [, setNow] = useState(Date.now());
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -118,6 +124,32 @@ const ContentGrid = () => {
     };
   }, []);
 
+  // Personalization: category weights from reactions + bookmarks
+  useEffect(() => {
+    if (!user) {
+      setTaste({});
+      return;
+    }
+    let cancelled = false;
+    supabase.rpc('user_taste', { p_user_id: user.id }).then(({ data }) => {
+      if (cancelled || !data) return;
+      const map: Record<string, number> = {};
+      (data as { category: string; weight: number }[]).forEach(r => {
+        if (r.category) map[r.category.toLowerCase()] = Number(r.weight) || 0;
+      });
+      setTaste(map);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const tagTaste = useMemo(() => {
+    const map = new Map<string, number>();
+    bookmarkedPosts.forEach(p => p.tags?.forEach(t => map.set(t, (map.get(t) || 0) + 1)));
+    return map;
+  }, [bookmarkedPosts]);
+
   const categories = useMemo(() => {
     const set = new Set<string>();
     posts.forEach(p => set.add(p.category));
@@ -133,6 +165,19 @@ const ContentGrid = () => {
       .map(([t]) => `#${t}`);
   }, [posts]);
 
+  const forYouScore = useCallback(
+    (p: PostDisplay) => {
+      const maxTaste = Math.max(1, ...Object.values(taste));
+      const cat = (taste[p.category.toLowerCase()] || 0) / maxTaste;
+      const tagHits = p.tags.reduce((s, t) => s + (tagTaste.get(t) || 0), 0);
+      const ageDays = (Date.now() - new Date(p.createdAt).getTime()) / 86400000;
+      const recency = Math.exp(-ageDays / 7);
+      const engagement = Math.log10(1 + p.views + p.likes * 3) / 3;
+      return cat * 3 + Math.min(tagHits, 5) * 0.4 + recency * 2 + engagement;
+    },
+    [taste, tagTaste]
+  );
+
   const filtered = useMemo(() => {
     let list = [...posts];
     if (activeCategory !== 'All') {
@@ -141,12 +186,14 @@ const ContentGrid = () => {
     if (activeTag) {
       list = list.filter(p => p.tags.some(t => `#${t}` === activeTag));
     }
-    if (activeFilter === 'Trending') list.sort((a, b) => b.engagementScore - a.engagementScore);
+    if (activeFilter === 'For You') list.sort((a, b) => forYouScore(b) - forYouScore(a));
+    else if (activeFilter === 'Trending') list.sort((a, b) => b.engagementScore - a.engagementScore);
     else if (activeFilter === 'Most Viewed') list.sort((a, b) => b.views - a.views);
     else if (activeFilter === 'Latest')
       list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     return list;
-  }, [posts, activeCategory, activeTag, activeFilter]);
+  }, [posts, activeCategory, activeTag, activeFilter, forYouScore]);
+
 
   // Reset pagination on filter change
   useEffect(() => {
@@ -200,7 +247,7 @@ const ContentGrid = () => {
       </div>
 
       <div className="flex items-center gap-2 mb-4 flex-wrap justify-center">
-        {filters.map(f => (
+        {filters.filter(f => f !== 'For You' || !!user).map(f => (
           <button
             key={f}
             onClick={() => setActiveFilter(f)}

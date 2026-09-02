@@ -16,7 +16,11 @@ import Admin from "./pages/Admin";
 import HustleBoard from "./pages/HustleBoard";
 import PulseDashboard from "./pages/PulseDashboard";
 import Legal from "./pages/Legal";
+import Profile from "./pages/Profile";
+import TagFeed from "./pages/TagFeed";
+import Search from "./pages/Search";
 import NotFound from "./pages/NotFound";
+
 
 const queryClient = new QueryClient();
 
@@ -55,6 +59,10 @@ const App = () => {
                   <Route path="/hustle-board" element={<ProtectedRoute title="Hustle & Collab" subtitle="Log in to browse remote gigs and post community opportunities."><HustleBoard /></ProtectedRoute>} />
                   <Route path="/pulse" element={<ProtectedRoute title="Pulse Hub" subtitle="Sign in to access live sports, crypto, and global intel."><PulseDashboard /></ProtectedRoute>} />
                   <Route path="/legal" element={<Legal />} />
+                  <Route path="/u/:handle" element={<Profile />} />
+                  <Route path="/tag/:tag" element={<ProtectedRoute title="Tag feed" subtitle="Sign in to explore stories by tag."><TagFeed /></ProtectedRoute>} />
+                  <Route path="/search" element={<ProtectedRoute title="Search D'Block" subtitle="Sign in to search every published story."><Search /></ProtectedRoute>} />
+
                   <Route path="/admin" element={<Admin />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

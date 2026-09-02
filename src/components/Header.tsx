@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
-import { Bookmark, Menu, X, Activity, Home, Newspaper, LayoutDashboard, Shield } from 'lucide-react';
+import { Bookmark, Menu, X, Activity, Home, Newspaper, LayoutDashboard, Shield, Search, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import ThemeToggle from './ThemeToggle';
 import WallpaperPicker from './WallpaperPicker';
@@ -11,8 +11,11 @@ import NotificationBell from './NotificationBell';
 import MarqueeTicker from './MarqueeTicker';
 import MyStash from './MyStash';
 import PostDetailModal from './PostDetailModal';
+import StreakBadge from './StreakBadge';
 import { useBookmarks } from '@/hooks/useBookmarks';
+import { useProfile } from '@/hooks/useProfile';
 import type { PostDisplay } from './ContentGrid';
+
 
 const Header = () => {
   const { isAuthenticated, user, logout, isAdmin } = useAuth();
