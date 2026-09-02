@@ -62,7 +62,9 @@ const ContentGrid = () => {
   const [loading, setLoading] = useState(true);
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [selectedPost, setSelectedPost] = useState<PostDisplay | null>(null);
-  const { bookmarkedIds, toggleBookmark } = useBookmarks();
+  const { bookmarkedIds, bookmarkedPosts, toggleBookmark } = useBookmarks();
+  const [taste, setTaste] = useState<Record<string, number>>({});
+
   const [, setNow] = useState(Date.now());
   const sentinelRef = useRef<HTMLDivElement>(null);
 
