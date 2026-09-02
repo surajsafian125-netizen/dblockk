@@ -8,6 +8,8 @@ import CategoryFilter from './CategoryFilter';
 import { supabase } from '@/integrations/supabase/client';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { Newspaper } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+
 
 interface DBPost {
   id: string;
