@@ -247,7 +247,7 @@ const ContentGrid = () => {
       </div>
 
       <div className="flex items-center gap-2 mb-4 flex-wrap justify-center">
-        {filters.map(f => (
+        {filters.filter(f => f !== 'For You' || !!user).map(f => (
           <button
             key={f}
             onClick={() => setActiveFilter(f)}
