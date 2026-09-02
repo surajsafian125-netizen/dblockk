@@ -16,7 +16,11 @@ import Admin from "./pages/Admin";
 import HustleBoard from "./pages/HustleBoard";
 import PulseDashboard from "./pages/PulseDashboard";
 import Legal from "./pages/Legal";
+import Profile from "./pages/Profile";
+import TagFeed from "./pages/TagFeed";
+import Search from "./pages/Search";
 import NotFound from "./pages/NotFound";
+
 
 const queryClient = new QueryClient();
 
