@@ -171,6 +171,8 @@ const PostDetailModal = ({
                   />
                 </div>
 
+                <ReportButton postId={post.id} label="Report" />
+
                 <span className="flex items-center gap-1 text-xs text-muted-foreground ml-auto">
                   <MessageCircle className="h-3.5 w-3.5" /> {comments.length} comments
                 </span>
