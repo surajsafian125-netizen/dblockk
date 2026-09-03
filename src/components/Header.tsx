@@ -26,6 +26,7 @@ const Header = () => {
   const [stashPost, setStashPost] = useState<PostDisplay | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { bookmarkedIds, bookmarkedPosts, toggleBookmark, loading: stashLoading } = useBookmarks();
+  const { profile } = useProfile();
   const location = useLocation();
 
   const requestAuth = (mode: 'login' | 'signup') => {
@@ -105,10 +106,27 @@ const Header = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
+            <Link
+              to="/search"
+              title="Search"
+              className="glass rounded-lg p-2 glass-hover transition-all"
+            >
+              <Search className="h-4 w-4" />
+            </Link>
             <ThemeToggle />
             {isAuthenticated && <WallpaperPicker />}
             {isAuthenticated ? (
               <>
+                <StreakBadge />
+                {profile?.handle && (
+                  <Link
+                    to={`/u/${profile.handle}`}
+                    title="My profile"
+                    className="glass rounded-lg p-2 glass-hover transition-all"
+                  >
+                    <User className="h-4 w-4" />
+                  </Link>
+                )}
                 <NotificationBell />
                 <motion.button
                   whileTap={{ scale: 0.95 }}
@@ -202,6 +220,26 @@ const Header = () => {
                   {link.label}
                 </Link>
               ))}
+
+              <Link
+                to="/search"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted/30 hover:text-foreground transition-all"
+              >
+                <Search className="h-4 w-4" />
+                Search
+              </Link>
+
+              {isAuthenticated && profile?.handle && (
+                <Link
+                  to={`/u/${profile.handle}`}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted/30 hover:text-foreground transition-all"
+                >
+                  <User className="h-4 w-4" />
+                  My Profile
+                  <StreakBadge className="ml-auto" />
+                </Link>
+              )}
+
 
               {isAuthenticated && (
                 <button

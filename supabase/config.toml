@@ -27,3 +27,8 @@ verify_jwt = false
 verify_jwt = false
 
 
+[functions.rss]
+verify_jwt = false
+
+[functions.publish-due-posts]
+verify_jwt = false
