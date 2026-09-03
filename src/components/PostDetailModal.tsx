@@ -183,9 +183,12 @@ const PostDetailModal = ({
                 {comments.map(c => (
                   <div key={c.id} className="glass rounded-xl p-3 text-sm">
                     <p className="text-foreground">{c.content}</p>
-                    <span className="text-xs text-muted-foreground mt-1 block">
-                      {new Date(c.created_at!).toLocaleDateString()}
-                    </span>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(c.created_at!).toLocaleDateString()}
+                      </span>
+                      <ReportButton commentId={c.id} />
+                    </div>
                   </div>
                 ))}
               </div>
