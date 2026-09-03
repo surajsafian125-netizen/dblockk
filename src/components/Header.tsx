@@ -221,6 +221,26 @@ const Header = () => {
                 </Link>
               ))}
 
+              <Link
+                to="/search"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted/30 hover:text-foreground transition-all"
+              >
+                <Search className="h-4 w-4" />
+                Search
+              </Link>
+
+              {isAuthenticated && profile?.handle && (
+                <Link
+                  to={`/u/${profile.handle}`}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted/30 hover:text-foreground transition-all"
+                >
+                  <User className="h-4 w-4" />
+                  My Profile
+                  <StreakBadge className="ml-auto" />
+                </Link>
+              )}
+
+
               {isAuthenticated && (
                 <button
                   onClick={() => { setStashOpen(true); setMobileOpen(false); }}
