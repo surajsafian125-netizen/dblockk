@@ -5,6 +5,7 @@ import StructuredArticle from './StructuredArticle';
 import ReactionsBar from './ReactionsBar';
 import ShareMenu from './ShareMenu';
 import RelatedPosts from './RelatedPosts';
+import ReportButton from './ReportButton';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { PostDisplay } from './ContentGrid';
