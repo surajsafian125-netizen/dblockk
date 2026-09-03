@@ -26,6 +26,7 @@ const Header = () => {
   const [stashPost, setStashPost] = useState<PostDisplay | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { bookmarkedIds, bookmarkedPosts, toggleBookmark, loading: stashLoading } = useBookmarks();
+  const { profile } = useProfile();
   const location = useLocation();
 
   const requestAuth = (mode: 'login' | 'signup') => {
