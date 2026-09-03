@@ -105,10 +105,27 @@ const Header = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
+            <Link
+              to="/search"
+              title="Search"
+              className="glass rounded-lg p-2 glass-hover transition-all"
+            >
+              <Search className="h-4 w-4" />
+            </Link>
             <ThemeToggle />
             {isAuthenticated && <WallpaperPicker />}
             {isAuthenticated ? (
               <>
+                <StreakBadge />
+                {profile?.handle && (
+                  <Link
+                    to={`/u/${profile.handle}`}
+                    title="My profile"
+                    className="glass rounded-lg p-2 glass-hover transition-all"
+                  >
+                    <User className="h-4 w-4" />
+                  </Link>
+                )}
                 <NotificationBell />
                 <motion.button
                   whileTap={{ scale: 0.95 }}
