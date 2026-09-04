@@ -225,8 +225,8 @@ const CultureEntertainmentFeed = () => {
       const res = await fetch(rssJsonUrl);
       const json = await res.json();
       if (json.status === 'ok' && json.items?.length) {
-        setItems(
-          json.items.slice(0, 18).map((item: any) => ({
+        const parsed = json.items
+          .map((item: any) => ({
             title: item.title || 'Untitled',
             description: item.description || '',
             content: item.content || item.description || '',
@@ -235,7 +235,8 @@ const CultureEntertainmentFeed = () => {
             pubDate: item.pubDate || new Date().toISOString(),
             source: item.author || 'Google News',
           }))
-        );
+          .sort((a: FeedItem, b: FeedItem) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+        setItems(parsed.slice(0, 18));
       } else {
         setError(true);
       }
