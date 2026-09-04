@@ -924,6 +924,11 @@ const Admin = () => {
           );
         })()}
 
+        {/* Scheduling, moderation & analytics */}
+        <ContentCalendar />
+        <ModerationQueue />
+        <RealAnalytics />
+
         {/* Security Terminal */}
         {showSecurity && <SecurityTerminal />}
 
