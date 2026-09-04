@@ -17,7 +17,7 @@ const TrendingTags = ({ limit = 18, className = '' }: { limit?: number; classNam
   useEffect(() => {
     let cancelled = false;
     supabase
-      .rpc('trending_tags', { p_days: 21, p_limit: limit })
+      .rpc('trending_tags', { p_days: 180, p_limit: limit })
       .then(({ data }) => {
         if (cancelled) return;
         setTags(((data as TagRow[]) || []).filter(t => t.tag));
