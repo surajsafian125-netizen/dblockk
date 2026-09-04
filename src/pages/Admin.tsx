@@ -7,6 +7,9 @@ import { Trash2, Edit, Eye, EyeOff, Send, Bot, Plus, Save, X, Upload, BarChart3,
 import { Switch } from '@/components/ui/switch';
 import Header from '@/components/Header';
 import SecurityTerminal from '@/components/SecurityTerminal';
+import ContentCalendar from '@/components/admin/ContentCalendar';
+import ModerationQueue from '@/components/admin/ModerationQueue';
+import RealAnalytics from '@/components/admin/RealAnalytics';
 import ParticleBackground from '@/components/ParticleBackground';
 import Footer from '@/components/Footer';
 import { streamChat, type Msg } from '@/lib/streamChat';
@@ -923,6 +926,11 @@ const Admin = () => {
             </motion.div>
           );
         })()}
+
+        {/* Scheduling, moderation & analytics */}
+        <ContentCalendar />
+        <ModerationQueue />
+        <RealAnalytics />
 
         {/* Security Terminal */}
         {showSecurity && <SecurityTerminal />}
