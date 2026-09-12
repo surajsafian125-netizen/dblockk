@@ -119,6 +119,29 @@ const Admin = () => {
     }
   };
 
+  const repairLocalNews = async () => {
+    setRepairingLocal(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-local-news', {
+        body: { mode: 'repair' },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (data?.repaired > 0) {
+        toast.success(`Full story text restored for ${data.repaired} local article${data.repaired === 1 ? '' : 's'}`);
+      } else {
+        toast.info('No local articles needed restoring');
+      }
+      fetchPosts();
+    } catch (e: any) {
+      console.error('[Local News repair] error', e);
+      toast.error(e?.message || 'Failed to restore local stories');
+    } finally {
+      setRepairingLocal(false);
+    }
+  };
+
+
   const publishDraftArticle = async (id: string) => {
     const { error } = await supabase
       .from('posts')
