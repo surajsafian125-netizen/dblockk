@@ -95,6 +95,7 @@ const Admin = () => {
   const [broadcasting, setBroadcasting] = useState(false);
   const [sendingDigest, setSendingDigest] = useState(false);
   const [fetchingLocal, setFetchingLocal] = useState(false);
+  const [repairingLocal, setRepairingLocal] = useState(false);
   const [draftTab, setDraftTab] = useState<'global' | 'local'>('global');
 
   const fetchLocalNews = async () => {
