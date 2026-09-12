@@ -95,6 +95,7 @@ const Admin = () => {
   const [broadcasting, setBroadcasting] = useState(false);
   const [sendingDigest, setSendingDigest] = useState(false);
   const [fetchingLocal, setFetchingLocal] = useState(false);
+  const [repairingLocal, setRepairingLocal] = useState(false);
   const [draftTab, setDraftTab] = useState<'global' | 'local'>('global');
 
   const fetchLocalNews = async () => {
@@ -117,6 +118,29 @@ const Admin = () => {
       setFetchingLocal(false);
     }
   };
+
+  const repairLocalNews = async () => {
+    setRepairingLocal(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-local-news', {
+        body: { mode: 'repair' },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (data?.repaired > 0) {
+        toast.success(`Full story text restored for ${data.repaired} local article${data.repaired === 1 ? '' : 's'}`);
+      } else {
+        toast.info('No local articles needed restoring');
+      }
+      fetchPosts();
+    } catch (e: any) {
+      console.error('[Local News repair] error', e);
+      toast.error(e?.message || 'Failed to restore local stories');
+    } finally {
+      setRepairingLocal(false);
+    }
+  };
+
 
   const publishDraftArticle = async (id: string) => {
     const { error } = await supabase
@@ -822,6 +846,10 @@ const Admin = () => {
           <button onClick={fetchLocalNews} disabled={fetchingLocal} className="border border-primary/40 bg-primary/10 text-primary rounded-xl px-4 py-2 text-sm font-medium hover:bg-primary/20 transition-all flex items-center gap-2 disabled:opacity-50">
             {fetchingLocal ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
             {fetchingLocal ? 'Fetching Ghana news…' : 'Generate Local News'}
+          </button>
+          <button onClick={repairLocalNews} disabled={repairingLocal} className="border border-primary/40 bg-primary/10 text-primary rounded-xl px-4 py-2 text-sm font-medium hover:bg-primary/20 transition-all flex items-center gap-2 disabled:opacity-50">
+            {repairingLocal ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
+            {repairingLocal ? 'Restoring full stories…' : 'Restore Local Story Text'}
           </button>
           <button onClick={() => setShowAnalytics(!showAnalytics)} className="glass rounded-xl px-4 py-2 text-sm font-medium glass-hover transition-all flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-primary" /> Analytics Control
