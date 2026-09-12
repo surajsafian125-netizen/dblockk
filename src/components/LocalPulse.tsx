@@ -8,6 +8,7 @@ interface LocalArticle {
   pubDate: string;
   thumbnail: string;
   source: string;
+  excerpt: string;
 }
 
 interface WeatherData {
@@ -22,6 +23,17 @@ interface LocalPulseProps {
 }
 
 const fallbackThumb = 'https://images.unsplash.com/photo-1504711434969-e33886168d6c?w=400&h=250&fit=crop';
+const fallbackExcerpt = 'Read full local coverage for developing details, official statements, and background.';
+
+const cleanExcerpt = (value: unknown): string => {
+  if (typeof value !== 'string' || !value.trim()) return fallbackExcerpt;
+
+  const document = new DOMParser().parseFromString(value, 'text/html');
+  const text = document.body.textContent || '';
+  const cleaned = text.replace(/\s+/g, ' ').trim();
+
+  return cleaned || fallbackExcerpt;
+};
 
 const timeAgo = (date: string) => {
   const diff = Date.now() - new Date(date).getTime();
@@ -121,12 +133,19 @@ const LocalPulse = ({ cityQuery, countryQuery }: LocalPulseProps) => {
           return `https://source.unsplash.com/400x250/?${encodeURIComponent(cityQuery || 'city')},news&sig=${encodeURIComponent(item.title || '').slice(0, 20)}`;
         };
         setArticles(
-          json.items.slice(0, 8).map((item: any) => ({
+          json.items
+          .slice()
+          .sort((a: any, b: any) => new Date(b.pubDate || 0).getTime() - new Date(a.pubDate || 0).getTime())
+          .slice(0, 8)
+          .map((item: any) => ({
             title: item.title || 'Untitled',
             link: item.link || '#',
             pubDate: item.pubDate || '',
             thumbnail: extractImg(item),
             source: item.author || 'Google News',
+            excerpt: cleanExcerpt(
+              item.contentSnippet || item.summary || item.description || item.content
+            ),
           }))
         );
       } else {
@@ -211,6 +230,8 @@ const LocalPulse = ({ cityQuery, countryQuery }: LocalPulseProps) => {
                 <div className="p-3 space-y-2">
                   <div className="h-3 bg-muted/20 rounded w-3/4" />
                   <div className="h-3 bg-muted/20 rounded w-1/2" />
+                   <div className="h-3 bg-muted/20 rounded w-full" />
+                   <div className="h-3 bg-muted/20 rounded w-5/6" />
                 </div>
               </div>
             ))}
@@ -236,7 +257,7 @@ const LocalPulse = ({ cityQuery, countryQuery }: LocalPulseProps) => {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.06 }}
                 whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                className="glass glass-hover rounded-xl overflow-hidden group block"
+                className="glass glass-hover rounded-xl overflow-hidden group flex h-full flex-col"
               >
                 <div className="relative h-32 overflow-hidden">
                   <img
@@ -251,16 +272,24 @@ const LocalPulse = ({ cityQuery, countryQuery }: LocalPulseProps) => {
                     <ExternalLink className="h-3.5 w-3.5 text-primary" />
                   </div>
                 </div>
-                <div className="p-3">
-                  <h4 className="text-sm font-medium line-clamp-2 mb-2 group-hover:text-primary transition-colors">
-                    {a.title}
-                  </h4>
-                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                    <span className="truncate max-w-[60%]">{a.source}</span>
+                <div className="p-4 flex flex-1 flex-col">
+                  <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground mb-2.5">
+                    <span className="truncate max-w-[65%] rounded-full bg-primary/10 px-2 py-1 font-medium text-primary">
+                      {a.source}
+                    </span>
                     <span className="flex items-center gap-1 shrink-0">
                       <Clock className="h-3 w-3" /> {timeAgo(a.pubDate)}
                     </span>
                   </div>
+                  <h4 className="text-sm font-semibold leading-snug line-clamp-2 mb-2 group-hover:text-primary transition-colors">
+                    {a.title}
+                  </h4>
+                  <p className="text-xs leading-relaxed text-muted-foreground line-clamp-3 mb-3">
+                    {a.excerpt}
+                  </p>
+                  <span className="mt-auto inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                    Read Full Story <ExternalLink className="h-3 w-3" />
+                  </span>
                 </div>
               </motion.a>
             ))}

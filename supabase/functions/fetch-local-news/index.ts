@@ -2,6 +2,24 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const NEWSDATA_ENDPOINT = 'https://newsdata.io/api/1/latest';
+const FALLBACK_SUMMARY = 'Read full local coverage for developing details, official statements, and background.';
+
+const cleanText = (value: unknown): string => {
+  if (typeof value !== 'string' || !value.trim()) return '';
+
+  return value
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -73,12 +91,15 @@ Deno.serve(async (req) => {
       .filter((r) => r.title && !seen.has(r.title))
       .slice(0, 15)
       .map((r) => {
-        const body: string = r.content || r.description || r.title;
+        const body = cleanText(r.content || r.full_description || r.description || r.title);
+        const summary = cleanText(
+          r.description || r.summary || r.contentSnippet || r.full_description || r.content,
+        ) || FALLBACK_SUMMARY;
         const words = body.split(/\s+/).length;
         return {
-          title: String(r.title).slice(0, 300),
+          title: cleanText(r.title).slice(0, 300),
           content: r.link ? `${body}\n\n[Read the original report](${r.link})` : body,
-          description: (r.description || body).slice(0, 200),
+          description: summary.slice(0, 500),
           category: 'Local News',
           news_category: 'local',
           status: 'draft',
