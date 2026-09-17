@@ -34,6 +34,8 @@ const PostDetailModal = ({
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [fullText, setFullText] = useState<string | null>(null);
+  const [loadingFullText, setLoadingFullText] = useState(false);
 
   useEffect(() => {
     if (!post) return;
@@ -46,6 +48,38 @@ const PostDetailModal = ({
       if (data) setComments(data);
     };
     fetchComments();
+  }, [post]);
+
+  // Some syndicated stories arrive without their body text. Pull the real
+  // article from the publisher so readers never see a placeholder.
+  useEffect(() => {
+    setFullText(null);
+    setLoadingFullText(false);
+    if (!post) return;
+
+    const raw = post.content || '';
+    const needsText =
+      /ONLY AVAILABLE IN (PAID|PROFESSIONAL|CORPORATE)/i.test(raw) || raw.trim().length < 240;
+    const link = raw.match(/\((https?:\/\/[^\s)]+)\)/)?.[1];
+    if (!needsText || !link) return;
+
+    let cancelled = false;
+    setLoadingFullText(true);
+    supabase.functions
+      .invoke('article-text', { body: { url: link } })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (!error && data?.text) {
+          setFullText(`${data.text}\n\n[Read the original report](${link})`);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingFullText(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [post]);
 
   const handleComment = async () => {
