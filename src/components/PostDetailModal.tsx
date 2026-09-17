@@ -174,7 +174,17 @@ const PostDetailModal = ({
                 </span>
               </div>
 
-              <StructuredArticle content={post.content || post.description} title={post.title} />
+              {loadingFullText && (
+                <div className="glass rounded-xl p-4 mb-4 space-y-2 animate-pulse">
+                  <div className="h-3 w-3/4 rounded bg-muted/20" />
+                  <div className="h-3 w-full rounded bg-muted/20" />
+                  <div className="h-3 w-5/6 rounded bg-muted/20" />
+                </div>
+              )}
+              <StructuredArticle
+                content={fullText || post.content || post.description}
+                title={post.title}
+              />
 
               <div className="mt-6 mb-5">
                 <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">
