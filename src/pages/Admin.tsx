@@ -10,6 +10,7 @@ import SecurityTerminal from '@/components/SecurityTerminal';
 import ContentCalendar from '@/components/admin/ContentCalendar';
 import ModerationQueue from '@/components/admin/ModerationQueue';
 import RealAnalytics from '@/components/admin/RealAnalytics';
+import EngagementControl from '@/components/admin/EngagementControl';
 import ParticleBackground from '@/components/ParticleBackground';
 import Footer from '@/components/Footer';
 import { streamChat, type Msg } from '@/lib/streamChat';
