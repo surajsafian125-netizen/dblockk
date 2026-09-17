@@ -10,6 +10,7 @@ import SecurityTerminal from '@/components/SecurityTerminal';
 import ContentCalendar from '@/components/admin/ContentCalendar';
 import ModerationQueue from '@/components/admin/ModerationQueue';
 import RealAnalytics from '@/components/admin/RealAnalytics';
+import EngagementControl from '@/components/admin/EngagementControl';
 import ParticleBackground from '@/components/ParticleBackground';
 import Footer from '@/components/Footer';
 import { streamChat, type Msg } from '@/lib/streamChat';
@@ -1329,6 +1330,8 @@ const Admin = () => {
             </div>
           </motion.div>
         )}
+
+        <EngagementControl />
 
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
