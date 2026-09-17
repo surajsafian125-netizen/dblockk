@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.publish-due-posts]
 verify_jwt = false
+
+[functions.article-text]
+verify_jwt = false
