@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion';
+import { Download } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import InstallAppButton, { useInstallPrompt } from './InstallAppButton';
 
 const Hero = () => {
   const { isAuthenticated } = useAuth();
