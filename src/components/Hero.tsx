@@ -1,8 +1,11 @@
 import { motion } from 'framer-motion';
+import { Download } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import InstallAppButton, { useInstallPrompt } from './InstallAppButton';
 
 const Hero = () => {
   const { isAuthenticated } = useAuth();
+  const { installed } = useInstallPrompt();
 
   const openSignup = () => {
     window.dispatchEvent(new CustomEvent('open-auth', { detail: 'signup' }));
@@ -24,6 +27,22 @@ const Hero = () => {
         >
           D'Block
         </motion.h1>
+
+        {!installed && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.8 }}
+            className="mt-6 inline-flex items-center gap-3 glass rounded-full pl-2 pr-4 py-2"
+          >
+            <img src="/icon-192.png" alt="" width={32} height={32} className="rounded-lg" />
+            <span className="text-sm text-muted-foreground">Get D'Block on your device</span>
+            <span className="flex items-center gap-1.5 text-sm">
+              <Download className="h-3.5 w-3.5 text-primary" />
+              <InstallAppButton variant="link" />
+            </span>
+          </motion.div>
+        )}
 
         {!isAuthenticated && (
           <motion.div

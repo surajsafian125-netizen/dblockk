@@ -12,6 +12,7 @@ import MarqueeTicker from './MarqueeTicker';
 import MyStash from './MyStash';
 import PostDetailModal from './PostDetailModal';
 import StreakBadge from './StreakBadge';
+import InstallAppButton from './InstallAppButton';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useProfile } from '@/hooks/useProfile';
 import type { PostDisplay } from './ContentGrid';
@@ -113,6 +114,7 @@ const Header = () => {
             >
               <Search className="h-4 w-4" />
             </Link>
+            <InstallAppButton />
             <ThemeToggle />
             {isAuthenticated && <WallpaperPicker />}
             {isAuthenticated ? (
@@ -228,6 +230,8 @@ const Header = () => {
                 <Search className="h-4 w-4" />
                 Search
               </Link>
+
+              <InstallAppButton variant="full" />
 
               {isAuthenticated && profile?.handle && (
                 <Link
