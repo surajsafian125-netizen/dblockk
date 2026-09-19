@@ -37,9 +37,9 @@ const Hero = () => {
           >
             <img src="/icon-192.png" alt="" width={32} height={32} className="rounded-lg" />
             <span className="text-sm text-muted-foreground">Get D'Block on your device</span>
-            <span className="flex items-center gap-1.5 text-sm text-primary font-medium">
-              <Download className="h-3.5 w-3.5" />
-              <InstallAppInline />
+            <span className="flex items-center gap-1.5 text-sm">
+              <Download className="h-3.5 w-3.5 text-primary" />
+              <InstallAppButton variant="link" />
             </span>
           </motion.div>
         )}
