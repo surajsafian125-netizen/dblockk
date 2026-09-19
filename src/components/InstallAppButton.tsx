@@ -45,7 +45,7 @@ export function useInstallPrompt() {
   return { deferredPrompt, installed };
 }
 
-const InstallAppButton = ({ variant = 'icon' }: { variant?: 'icon' | 'full' }) => {
+const InstallAppButton = ({ variant = 'icon' }: { variant?: 'icon' | 'full' | 'link' }) => {
   const { deferredPrompt, installed } = useInstallPrompt();
   const [modalOpen, setModalOpen] = useState(false);
   const [dismissed, setDismissed] = useState(() => localStorage.getItem(DISMISS_KEY) === '1');
@@ -85,6 +85,13 @@ const InstallAppButton = ({ variant = 'icon' }: { variant?: 'icon' | 'full' }) =
         >
           <Download className="h-4 w-4" />
         </motion.button>
+      ) : variant === 'link' ? (
+        <button
+          onClick={handleClick}
+          className="text-primary font-medium hover:underline underline-offset-4 transition-all"
+        >
+          Install App
+        </button>
       ) : (
         <button
           onClick={handleClick}
