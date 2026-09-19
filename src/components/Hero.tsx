@@ -5,6 +5,7 @@ import InstallAppButton, { useInstallPrompt } from './InstallAppButton';
 
 const Hero = () => {
   const { isAuthenticated } = useAuth();
+  const { installed } = useInstallPrompt();
 
   const openSignup = () => {
     window.dispatchEvent(new CustomEvent('open-auth', { detail: 'signup' }));
