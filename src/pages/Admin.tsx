@@ -93,6 +93,9 @@ const Admin = () => {
   const [importing, setImporting] = useState(false);
   const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(null);
   const [broadcastMsg, setBroadcastMsg] = useState('');
+  const [broadcastTitle, setBroadcastTitle] = useState('');
+  const [broadcastLink, setBroadcastLink] = useState('');
+  const [broadcastType, setBroadcastType] = useState('news');
   const [broadcasting, setBroadcasting] = useState(false);
   const [sendingDigest, setSendingDigest] = useState(false);
   const [fetchingLocal, setFetchingLocal] = useState(false);
@@ -682,15 +685,24 @@ const Admin = () => {
   };
 
   const sendBroadcast = async () => {
-    if (!broadcastMsg.trim()) return;
+    if (!broadcastMsg.trim() || !broadcastTitle.trim()) return;
+    const link = broadcastLink.trim();
+    if (link && !/^(https?:\/\/|\/)/.test(link)) { toast.error('Link must start with / or https://'); return; }
     setBroadcasting(true);
-    const { error } = await supabase.from('notifications').insert({ message: broadcastMsg.trim() });
+    const { error } = await supabase.from('notifications').insert({
+      message: broadcastMsg.trim(),
+      title: broadcastTitle.trim(),
+      type: broadcastType,
+      link: link || null,
+    } as any);
     if (error) {
       toast.error('Failed to send broadcast');
       console.error('[Broadcast] Insert error:', error);
     } else {
       toast.success('Broadcast sent!');
       setBroadcastMsg('');
+      setBroadcastTitle('');
+      setBroadcastLink('');
     }
     setBroadcasting(false);
   };
@@ -1185,21 +1197,45 @@ const Admin = () => {
           <h2 className="font-display text-lg font-semibold mb-4 flex items-center gap-2">
             <Megaphone className="h-5 w-5 text-primary" /> Send Broadcast
           </h2>
-          <div className="flex gap-2">
+          <div className="grid gap-2 sm:grid-cols-2">
             <input
+              value={broadcastTitle}
+              onChange={e => setBroadcastTitle(e.target.value)}
+              placeholder="Title"
+              maxLength={120}
+              className="bg-secondary/30 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground"
+            />
+            <select
+              value={broadcastType}
+              onChange={e => setBroadcastType(e.target.value)}
+              className="bg-secondary/30 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
+            >
+              <option value="news">News</option>
+              <option value="update">Update</option>
+              <option value="alert">Alert</option>
+              <option value="system">System</option>
+            </select>
+            <textarea
               value={broadcastMsg}
               onChange={e => setBroadcastMsg(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && sendBroadcast()}
-              placeholder="Type a notification message for all users..."
-              className="flex-1 bg-secondary/30 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground"
+              placeholder="Message for all users..."
+              maxLength={500}
+              rows={2}
+              className="sm:col-span-2 bg-secondary/30 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground"
+            />
+            <input
+              value={broadcastLink}
+              onChange={e => setBroadcastLink(e.target.value)}
+              placeholder="Optional link (e.g. /pulse or https://...)"
+              className="bg-secondary/30 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground"
             />
             <button
               onClick={sendBroadcast}
-              disabled={broadcasting || !broadcastMsg.trim()}
-              className="bg-primary text-primary-foreground rounded-xl px-5 py-2.5 text-sm font-medium hover:opacity-90 transition-all glow flex items-center gap-2 disabled:opacity-40"
+              disabled={broadcasting || !broadcastMsg.trim() || !broadcastTitle.trim()}
+              className="bg-primary text-primary-foreground rounded-xl px-5 py-2.5 text-sm font-medium hover:opacity-90 transition-all glow flex items-center justify-center gap-2 disabled:opacity-40"
             >
               {broadcasting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Send
+              Broadcast to all users
             </button>
           </div>
         </motion.div>

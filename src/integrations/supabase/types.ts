@@ -281,17 +281,32 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_read: boolean
+          link: string | null
           message: string
+          title: string
+          type: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
+          is_read?: boolean
+          link?: string | null
           message: string
+          title?: string
+          type?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
+          is_read?: boolean
+          link?: string | null
           message?: string
+          title?: string
+          type?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -445,6 +460,33 @@ export type Database = {
           id?: string
           is_public?: boolean
           updated_at?: string
+        }
+        Relationships: []
+      }
+      push_preferences: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          permission: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          permission?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          permission?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
         }
         Relationships: []
       }
