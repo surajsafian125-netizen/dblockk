@@ -1,18 +1,23 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Check } from 'lucide-react';
+import { Bell, Check, BellRing, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface Notification {
   id: string;
+  title?: string | null;
   message: string;
+  type?: string | null;
+  link?: string | null;
+  user_id?: string | null;
+  is_read?: boolean | null;
   created_at: string;
 }
 
 const timeAgo = (date: string) => {
-  const diff = Date.now() - new Date(date).getTime();
-  const mins = Math.floor(diff / 60000);
+  const mins = Math.floor((Date.now() - new Date(date).getTime()) / 60000);
   if (mins < 1) return 'just now';
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
@@ -20,43 +25,51 @@ const timeAgo = (date: string) => {
   return `${Math.floor(hrs / 24)}d ago`;
 };
 
+const pushSupported = () => typeof window !== 'undefined' && 'Notification' in window;
+
 const NotificationBell = () => {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  const [permission, setPermission] = useState<string>(pushSupported() ? Notification.permission : 'unsupported');
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const pushRef = useRef(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  const fetchNotifications = async () => {
-    const { data } = await supabase
-      .from('notifications')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(20);
-    if (data) setNotifications(data);
-  };
+  pushRef.current = pushEnabled && permission === 'granted';
 
-  const fetchReads = async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from('notification_reads')
-      .select('notification_id')
-      .eq('user_id', user.id);
-    if (data) setReadIds(new Set(data.map(r => r.notification_id)));
-  };
+  const isRead = (n: Notification) => readIds.has(n.id) || !!n.is_read;
 
   useEffect(() => {
     if (!user) return;
-    fetchNotifications();
-    fetchReads();
+    (async () => {
+      const [{ data: notes }, { data: reads }, { data: pref }] = await Promise.all([
+        supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(30),
+        supabase.from('notification_reads').select('notification_id').eq('user_id', user.id),
+        (supabase as any).from('push_preferences').select('enabled').eq('user_id', user.id).maybeSingle(),
+      ]);
+      if (notes) setNotifications(notes as Notification[]);
+      if (reads) setReadIds(new Set(reads.map((r) => r.notification_id)));
+      setPushEnabled(!!pref?.enabled);
+    })();
 
     const channel = supabase
-      .channel('notifications-realtime')
+      .channel(`notifications-${user.id}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload) => {
-        setNotifications(prev => [payload.new as Notification, ...prev]);
+        const n = payload.new as Notification;
+        if (n.user_id && n.user_id !== user.id) return;
+        setNotifications((prev) => [n, ...prev.filter((p) => p.id !== n.id)]);
+        if (pushRef.current) {
+          try {
+            const native = new Notification(n.title || "D'Block", { body: n.message, icon: '/icon-192.png', tag: n.id });
+            native.onclick = () => { window.focus(); if (n.link) window.location.href = n.link; };
+          } catch { /* ignore */ }
+        } else {
+          toast(n.title || 'New notification', { description: n.message });
+        }
       })
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
@@ -68,25 +81,47 @@ const NotificationBell = () => {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  const markAllRead = async () => {
+  const markRead = async (list: Notification[]) => {
     if (!user) return;
-    const unread = notifications.filter(n => !readIds.has(n.id));
-    if (unread.length === 0) return;
-    const rows = unread.map(n => ({ user_id: user.id, notification_id: n.id }));
-    await supabase.from('notification_reads').insert(rows);
-    setReadIds(prev => {
-      const next = new Set(prev);
-      unread.forEach(n => next.add(n.id));
-      return next;
-    });
+    const unread = list.filter((n) => !isRead(n));
+    if (!unread.length) return;
+    const personal = unread.filter((n) => n.user_id === user.id).map((n) => n.id);
+    const broadcast = unread.filter((n) => !n.user_id);
+    if (personal.length) await supabase.from('notifications').update({ is_read: true } as any).in('id', personal);
+    if (broadcast.length)
+      await supabase.from('notification_reads').insert(broadcast.map((n) => ({ user_id: user.id, notification_id: n.id })));
+    setReadIds((prev) => { const next = new Set(prev); unread.forEach((n) => next.add(n.id)); return next; });
   };
 
-  const unreadCount = notifications.filter(n => !readIds.has(n.id)).length;
+  const togglePush = async () => {
+    if (!user || !pushSupported()) { toast.error('This browser does not support notifications'); return; }
+    let perm = Notification.permission;
+    if (!pushEnabled && perm !== 'granted') perm = await Notification.requestPermission();
+    setPermission(perm);
+    const enabled = !pushEnabled && perm === 'granted';
+    if (!pushEnabled && perm !== 'granted') toast.error('Notifications are blocked in your browser settings');
+    await (supabase as any).from('push_preferences').upsert({
+      user_id: user.id, enabled, permission: perm, user_agent: navigator.userAgent.slice(0, 250),
+    });
+    setPushEnabled(enabled);
+    if (enabled) toast.success('Push notifications enabled');
+  };
+
+  const openItem = (n: Notification) => {
+    markRead([n]);
+    if (n.link) {
+      if (/^https?:\/\//.test(n.link)) window.open(n.link, '_blank', 'noopener');
+      else window.location.href = n.link;
+    }
+  };
+
+  const unreadCount = notifications.filter((n) => !isRead(n)).length;
 
   return (
     <div className="relative" ref={ref}>
       <button
-        onClick={() => { setOpen(!open); if (!open) markAllRead(); }}
+        onClick={() => setOpen(!open)}
+        aria-label="Notifications"
         className="relative p-2 rounded-lg glass glass-hover transition-all"
       >
         <Bell className="h-4 w-4" />
@@ -108,33 +143,50 @@ const NotificationBell = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-12 w-80 max-h-96 overflow-y-auto rounded-2xl border border-primary/10 bg-card/80 backdrop-blur-xl shadow-[0_0_40px_-10px_hsl(var(--primary)/0.15)] z-50"
+            className="absolute right-0 top-12 w-[min(20rem,calc(100vw-2rem))] max-h-[28rem] overflow-y-auto rounded-2xl border border-primary/10 bg-card/80 backdrop-blur-xl shadow-[0_0_40px_-10px_hsl(var(--primary)/0.15)] z-50"
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
               <span className="font-display text-sm font-semibold">Notifications</span>
               {unreadCount > 0 && (
-                <button onClick={markAllRead} className="text-[11px] text-primary hover:underline flex items-center gap-1">
-                  <Check className="h-3 w-3" /> Mark all read
+                <button onClick={() => markRead(notifications)} className="text-[11px] text-primary hover:underline flex items-center gap-1">
+                  <Check className="h-3 w-3" /> Mark all as read
                 </button>
               )}
             </div>
 
+            {permission !== 'unsupported' && (
+              <button
+                onClick={togglePush}
+                className="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-xs border-b border-border/30 hover:bg-primary/5"
+              >
+                <span className="flex items-center gap-2">
+                  <BellRing className="h-3.5 w-3.5 text-primary" />
+                  {pushEnabled ? 'Push notifications on' : 'Enable Push Notifications'}
+                </span>
+                <span className={`h-4 w-7 rounded-full p-0.5 transition-colors ${pushEnabled ? 'bg-primary' : 'bg-muted'}`}>
+                  <span className={`block h-3 w-3 rounded-full bg-background transition-transform ${pushEnabled ? 'translate-x-3' : ''}`} />
+                </span>
+              </button>
+            )}
+
             {notifications.length === 0 ? (
-              <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                No notifications yet
-              </div>
+              <div className="px-4 py-8 text-center text-sm text-muted-foreground">No notifications yet</div>
             ) : (
               <div className="divide-y divide-border/20">
-                {notifications.map(n => (
-                  <div
+                {notifications.map((n) => (
+                  <button
                     key={n.id}
-                    className={`px-4 py-3 text-sm transition-colors ${
-                      readIds.has(n.id) ? 'opacity-60' : 'bg-primary/5'
-                    }`}
+                    onClick={() => openItem(n)}
+                    className={`w-full text-left px-4 py-3 text-sm transition-colors hover:bg-primary/10 ${isRead(n) ? 'opacity-60' : 'bg-primary/5'}`}
                   >
-                    <p className="text-foreground leading-snug">{n.message}</p>
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-[10px] uppercase tracking-wide text-primary">{n.type || 'info'}</span>
+                      {n.link && <ExternalLink className="h-3 w-3 text-muted-foreground" />}
+                    </div>
+                    {n.title && <p className="font-semibold leading-snug">{n.title}</p>}
+                    <p className="text-foreground/90 leading-snug">{n.message}</p>
                     <span className="text-[11px] text-muted-foreground mt-1 block">{timeAgo(n.created_at)}</span>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
