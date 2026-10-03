@@ -4,6 +4,7 @@ import { Bell, Check, BellRing, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { subscribeDevice, unsubscribeDevice, webPushSupported } from '@/lib/webPush';
 
 interface Notification {
   id: string;
@@ -98,14 +99,26 @@ const NotificationBell = () => {
     let perm = Notification.permission;
     if (!pushEnabled && perm !== 'granted') perm = await Notification.requestPermission();
     setPermission(perm);
-    const enabled = !pushEnabled && perm === 'granted';
+    let enabled = !pushEnabled && perm === 'granted';
     if (!pushEnabled && perm !== 'granted') toast.error('Notifications are blocked in your browser settings');
+    if (enabled) {
+      const ok = await subscribeDevice(user.id);
+      if (!ok && webPushSupported()) toast.warning('Alerts will show while D\'Block is open; closed-app alerts are unavailable on this device');
+      if (!webPushSupported()) toast.message('On iPhone, add D\'Block to your Home Screen to get alerts when closed');
+    } else if (pushEnabled) {
+      await unsubscribeDevice();
+    }
     await (supabase as any).from('push_preferences').upsert({
       user_id: user.id, enabled, permission: perm, user_agent: navigator.userAgent.slice(0, 250),
     });
     setPushEnabled(enabled);
     if (enabled) toast.success('Push notifications enabled');
   };
+
+  // Refresh this device's subscription when already opted in
+  useEffect(() => {
+    if (user && pushEnabled && permission === 'granted') subscribeDevice(user.id);
+  }, [user, pushEnabled, permission]);
 
   const openItem = (n: Notification) => {
     markRead([n]);
