@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import DigestSignup from './DigestSignup';
+import AppLogo from './AppLogo';
 
 const Footer = () => {
   return (
@@ -7,6 +8,9 @@ const Footer = () => {
       <div className="container mx-auto px-4 py-8 space-y-6">
         <DigestSignup />
         <div className="flex flex-col items-center gap-2">
+          <Link to="/" aria-label="D'Block home" className="text-sm">
+            <AppLogo />
+          </Link>
           <div className="flex items-center gap-4">
             <Link
               to="/legal"

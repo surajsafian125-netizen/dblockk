@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ShieldCheck, ArrowRight, ExternalLink } from 'lucide-react';
+import { X, ArrowRight, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import AppLogo from './AppLogo';
 
 interface TermsModalProps {
   open: boolean;
@@ -38,9 +39,7 @@ const TermsModal = ({ open, onAccept, onClose }: TermsModalProps) => {
             className="glass-strong glow rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl relative max-h-[88vh] flex flex-col"
           >
             <div className="flex items-center gap-3 p-6 border-b border-border/20 shrink-0">
-              <div className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                <ShieldCheck className="h-5 w-5" />
-              </div>
+              <AppLogo iconOnly imageClassName="h-11 w-11" />
               <div className="flex-1 min-w-0">
                 <h2 className="font-display text-xl sm:text-2xl font-bold leading-tight">
                   D'block <span className="text-primary text-glow">Terms & Privacy Policy</span>
