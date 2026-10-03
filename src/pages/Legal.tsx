@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ShieldCheck } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import ParticleBackground from '@/components/ParticleBackground';
+import AppLogo from '@/components/AppLogo';
 
 const paragraphs = [
   `Welcome to D'block. By accessing or using my website, services, and mobile applications, you agree to be bound by these Terms of Service and my Privacy Policy. If you do not agree, please do not use my platform. D'block is a digital platform I created to offer aggregated global and local Ghanaian news, football live-scores, and e-commerce or freelance hustle listings, all built around the motto: Ask. Discover. Elevate. To access certain features, such as subscribing to my weekly email digest or saving articles, you may need to register an account. You agree to provide accurate information, and you are solely responsible for safeguarding your account details.`,
@@ -28,9 +29,7 @@ const Legal = () => {
           className="glass glow rounded-3xl p-6 sm:p-10"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-              <ShieldCheck className="h-5 w-5" />
-            </div>
+            <AppLogo iconOnly imageClassName="h-11 w-11" />
             <div>
               <h1 className="font-display text-2xl sm:text-3xl font-bold leading-tight">
                 D'block <span className="text-primary text-glow">Terms of Service</span> &amp; Privacy Policy

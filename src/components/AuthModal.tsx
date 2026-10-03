@@ -4,6 +4,7 @@ import { X, Mail, Lock, User as UserIcon, Eye, EyeOff, Sparkles, ArrowRight, Loa
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import loginWallpaper from '@/assets/login-wallpaper.jpeg.asset.json';
+import AppLogo from './AppLogo';
 
 
 interface AuthModalProps {
@@ -96,6 +97,7 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
 
 
             <div className="relative">
+              <AppLogo className="mb-6 text-lg" />
               <div className="inline-flex items-center gap-2 glass rounded-full px-3 py-1 text-[11px] text-primary mb-6">
                 <Sparkles className="h-3 w-3" /> D'Block Members
               </div>
@@ -152,6 +154,7 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
             </button>
 
             <div className="mb-6">
+              <AppLogo className="mb-4 text-lg md:hidden" />
               <h3 className="font-display text-2xl font-bold mb-1">
                 {isSignup ? 'Create your account' : 'Log in to D\u2019Block'}
               </h3>

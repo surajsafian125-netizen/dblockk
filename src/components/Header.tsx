@@ -16,6 +16,7 @@ import InstallAppButton from './InstallAppButton';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useProfile } from '@/hooks/useProfile';
 import type { PostDisplay } from './ContentGrid';
+import AppLogo from './AppLogo';
 
 
 const Header = () => {
@@ -83,8 +84,8 @@ const Header = () => {
         className="fixed top-0 left-0 right-0 z-50 glass"
       >
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="font-display text-xl font-bold">
-            <span className="text-primary text-glow">D'Block</span>
+          <Link to="/" className="text-xl">
+            <AppLogo />
           </Link>
 
           {/* Desktop Nav */}

@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Download } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import InstallAppButton, { useInstallPrompt } from './InstallAppButton';
+import AppLogo from './AppLogo';
 
 const Hero = () => {
   const { isAuthenticated } = useAuth();
@@ -35,7 +36,7 @@ const Hero = () => {
             transition={{ delay: 0.4, duration: 0.8 }}
             className="mt-6 inline-flex items-center gap-3 glass rounded-full pl-2 pr-4 py-2"
           >
-            <img src="/icon-192.png" alt="" width={32} height={32} className="rounded-lg" />
+            <AppLogo iconOnly />
             <span className="text-sm text-muted-foreground">Get D'Block on your device</span>
             <span className="flex items-center gap-1.5 text-sm">
               <Download className="h-3.5 w-3.5 text-primary" />
