@@ -689,17 +689,23 @@ const Admin = () => {
     const link = broadcastLink.trim();
     if (link && !/^(https?:\/\/|\/)/.test(link)) { toast.error('Link must start with / or https://'); return; }
     setBroadcasting(true);
-    const { error } = await supabase.from('notifications').insert({
+    const { data: inserted, error } = await supabase.from('notifications').insert({
       message: broadcastMsg.trim(),
       title: broadcastTitle.trim(),
       type: broadcastType,
       link: link || null,
-    } as any);
+    } as any).select('id').single();
     if (error) {
       toast.error('Failed to send broadcast');
       console.error('[Broadcast] Insert error:', error);
     } else {
-      toast.success('Broadcast sent!');
+      const { data: push, error: pushErr } = await supabase.functions.invoke('send-push', {
+        body: { notificationId: inserted.id },
+      });
+      if (pushErr) console.error('[Broadcast] push error', pushErr);
+      toast.success('Broadcast sent!', {
+        description: push ? `Delivered to ${push.sent} device${push.sent === 1 ? '' : 's'}` : undefined,
+      });
       setBroadcastMsg('');
       setBroadcastTitle('');
       setBroadcastLink('');
