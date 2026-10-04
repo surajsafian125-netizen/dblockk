@@ -94,25 +94,41 @@ const NotificationBell = () => {
     setReadIds((prev) => { const next = new Set(prev); unread.forEach((n) => next.add(n.id)); return next; });
   };
 
+  const [busy, setBusy] = useState(false);
   const togglePush = async () => {
+    if (busy) return;
     if (!user || !pushSupported()) { toast.error('This browser does not support notifications'); return; }
-    let perm = Notification.permission;
-    if (!pushEnabled && perm !== 'granted') perm = await Notification.requestPermission();
-    setPermission(perm);
-    let enabled = !pushEnabled && perm === 'granted';
-    if (!pushEnabled && perm !== 'granted') toast.error('Notifications are blocked in your browser settings');
-    if (enabled) {
-      const ok = await subscribeDevice(user.id);
-      if (!ok && webPushSupported()) toast.warning('Alerts will show while D\'Block is open; closed-app alerts are unavailable on this device');
-      if (!webPushSupported()) toast.message('On iPhone, add D\'Block to your Home Screen to get alerts when closed');
-    } else if (pushEnabled) {
-      await unsubscribeDevice();
+    if (window.self !== window.top) {
+      toast.error('Open D\'Block in its own tab (not the editor preview) to turn on alerts');
+      return;
     }
-    await (supabase as any).from('push_preferences').upsert({
-      user_id: user.id, enabled, permission: perm, user_agent: navigator.userAgent.slice(0, 250),
-    });
-    setPushEnabled(enabled);
-    if (enabled) toast.success('Push notifications enabled');
+    setBusy(true);
+    try {
+      let perm = Notification.permission;
+      if (!pushEnabled && perm !== 'granted') perm = await Notification.requestPermission();
+      setPermission(perm);
+      const enabled = !pushEnabled && perm === 'granted';
+      if (!pushEnabled && perm !== 'granted') toast.error('Notifications are blocked in your browser settings');
+      if (enabled) {
+        const ok = await subscribeDevice(user.id);
+        if (!webPushSupported()) toast.message('On iPhone, add D\'Block to your Home Screen to get alerts when closed');
+        else if (!ok) toast.warning('Alerts will show while D\'Block is open; closed-app alerts could not be set up on this device');
+      } else if (pushEnabled) {
+        await unsubscribeDevice();
+      }
+      const { error } = await (supabase as any).from('push_preferences').upsert({
+        user_id: user.id, enabled, permission: perm, user_agent: navigator.userAgent.slice(0, 250),
+      });
+      if (error) console.error('[push] preference save failed', error);
+      setPushEnabled(enabled);
+      if (enabled) toast.success('Push notifications enabled');
+      else if (pushEnabled) toast.message('Push notifications turned off');
+    } catch (e) {
+      console.error('[push] toggle failed', e);
+      toast.error('Could not change notification settings');
+    } finally {
+      setBusy(false);
+    }
   };
 
   // Refresh this device's subscription when already opted in

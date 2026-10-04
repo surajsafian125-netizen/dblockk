@@ -14,12 +14,24 @@ const b64ToUint8 = (b64: string) => {
 
 const getRegistration = () => navigator.serviceWorker.register('/push-sw.js', { scope: '/push/' });
 
+// navigator.serviceWorker.ready never resolves for a worker scoped outside the page,
+// so wait for this registration's own worker to become active instead.
+const waitActive = (reg: ServiceWorkerRegistration) =>
+  new Promise<void>((resolve, reject) => {
+    if (reg.active) return resolve();
+    const sw = reg.installing || reg.waiting;
+    const timer = setTimeout(() => reject(new Error('Service worker activation timed out')), 10000);
+    sw?.addEventListener('statechange', () => {
+      if (sw.state === 'activated') { clearTimeout(timer); resolve(); }
+    });
+  });
+
 /** Subscribe this device and save it. Returns true on success. */
 export async function subscribeDevice(userId: string): Promise<boolean> {
   if (!webPushSupported()) return false;
   try {
     const reg = await getRegistration();
-    await navigator.serviceWorker.ready.catch(() => undefined);
+    await waitActive(reg);
     let sub = await reg.pushManager.getSubscription();
     if (!sub) {
       sub = await reg.pushManager.subscribe({
