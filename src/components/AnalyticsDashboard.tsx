@@ -25,11 +25,8 @@ const AnalyticsDashboard = () => {
 
   useEffect(() => {
     const fetchAnalytics = async () => {
-      const { data } = await supabase
-        .from('analytics_settings')
-        .select('*')
-        .limit(1)
-        .single();
+      const { data: rows } = await (supabase as any).rpc('public_analytics');
+      const data = Array.isArray(rows) ? rows[0] : rows;
 
       if (data) {
         setStats([

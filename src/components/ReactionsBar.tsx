@@ -26,18 +26,17 @@ const ReactionsBar = ({ postId, compact = true, className = '' }: Props) => {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      const { data } = await supabase
-        .from('likes')
-        .select('emoji, user_id')
-        .eq('post_id', postId);
-      if (cancelled || !data) return;
+      const [{ data: totals }, mineRes] = await Promise.all([
+        (supabase as any).rpc('post_reaction_counts', { p_post_id: postId }),
+        user
+          ? supabase.from('likes').select('emoji').eq('post_id', postId).eq('user_id', user.id)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+      if (cancelled) return;
       const c: Record<string, number> = {};
       const m: Record<string, boolean> = {};
-      for (const row of data as any[]) {
-        const e = row.emoji || 'like';
-        c[e] = (c[e] || 0) + 1;
-        if (user && row.user_id === user.id) m[e] = true;
-      }
+      for (const row of (totals ?? []) as any[]) c[row.emoji || 'like'] = Number(row.total) || 0;
+      for (const row of (mineRes.data ?? []) as any[]) m[row.emoji || 'like'] = true;
       setCounts(c);
       setMine(m);
     };

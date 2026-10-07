@@ -607,6 +607,26 @@ export type Database = {
         }
         Returns: boolean
       }
+      post_reaction_counts: {
+        Args: { p_post_id: string }
+        Returns: {
+          emoji: string
+          total: number
+        }[]
+      }
+      public_analytics: {
+        Args: never
+        Returns: {
+          engagement_change: string
+          engagement_rate: string
+          growth: string
+          growth_change: string
+          total_users: string
+          total_views: string
+          users_change: string
+          views_change: string
+        }[]
+      }
       public_profile_activity: {
         Args: { p_limit?: number; p_user_id: string }
         Returns: {
