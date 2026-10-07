@@ -46,6 +46,15 @@ const Hero = () => {
           </motion.div>
         )}
 
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.8 }}
+          className="mt-3"
+        >
+          <AndroidDownloadButton variant="ghost" />
+        </motion.div>
+
         {!isAuthenticated && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
