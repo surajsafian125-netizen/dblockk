@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, X, Share, PlusSquare, Smartphone, MonitorSmartphone } from 'lucide-react';
+import AndroidDownloadButton from './AndroidDownloadButton';
 
 const DISMISS_KEY = 'dblock-install-dismissed';
 
@@ -175,6 +176,12 @@ const InstallAppButton = ({ variant = 'icon' }: { variant?: 'icon' | 'full' | 'l
                       <span>Confirm — D'Block launches like a native app</span>
                     </li>
                   </ol>
+                  <div className="pt-1">
+                    <AndroidDownloadButton variant="ghost" label="Download the APK instead" className="w-full" />
+                    <p className="mt-2 text-[11px] text-muted-foreground text-center">
+                      Installs outside the Play Store — you may need to allow "Install unknown apps".
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-3">
