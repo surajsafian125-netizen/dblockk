@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Download } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import InstallAppButton, { useInstallPrompt } from './InstallAppButton';
+import AndroidDownloadButton from './AndroidDownloadButton';
 import AppLogo from './AppLogo';
 
 const Hero = () => {
@@ -44,6 +45,15 @@ const Hero = () => {
             </span>
           </motion.div>
         )}
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.8 }}
+          className="mt-3"
+        >
+          <AndroidDownloadButton variant="ghost" />
+        </motion.div>
 
         {!isAuthenticated && (
           <motion.div
