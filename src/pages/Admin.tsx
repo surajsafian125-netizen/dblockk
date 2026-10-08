@@ -1265,6 +1265,36 @@ const Admin = () => {
               Broadcast to all users
             </button>
           </div>
+
+          {/* Sent broadcasts */}
+          <div className="mt-5 border-t border-border/40 pt-4">
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">Sent Broadcasts ({broadcasts.length})</h3>
+            {broadcasts.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No broadcasts sent yet.</p>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                {broadcasts.map(b => (
+                  <div key={b.id} className="flex items-start gap-3 bg-secondary/20 rounded-xl px-4 py-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs uppercase tracking-wide text-primary">{b.type}</span>
+                        <span className="text-xs text-muted-foreground">{new Date(b.created_at).toLocaleString()}</span>
+                      </div>
+                      <p className="text-sm font-medium truncate">{b.title}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{b.message}</p>
+                    </div>
+                    <button
+                      onClick={() => deleteBroadcast(b.id)}
+                      className="p-2 rounded-lg hover:bg-destructive/10 transition-colors shrink-0"
+                      title="Delete broadcast"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </motion.div>
 
         {/* AI Draft Editor */}
