@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CalendarDays, Bookmark, Heart, MessageCircle, Flame, Pencil, Check, X, Globe, Lock } from 'lucide-react';
+import { CalendarDays, Bookmark, Heart, MessageCircle, Flame, Pencil, Check, X, Globe, Lock, Camera, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
