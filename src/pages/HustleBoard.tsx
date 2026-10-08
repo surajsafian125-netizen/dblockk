@@ -175,7 +175,7 @@ const HustleBoard = () => {
           className="text-center mb-10"
         >
           <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-xs text-primary mb-4">
-            <Sparkles className="h-3.5 w-3.5" /> Community Board
+            <Sparkles className="h-3.5 w-3.5" />
           </div>
           <h1 className="font-display text-4xl md:text-5xl font-bold mb-4">
             Hustle & <span className="text-primary text-glow">Collab</span>
