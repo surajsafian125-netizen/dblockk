@@ -97,6 +97,26 @@ const Admin = () => {
   const [broadcastLink, setBroadcastLink] = useState('');
   const [broadcastType, setBroadcastType] = useState('news');
   const [broadcasting, setBroadcasting] = useState(false);
+  const [broadcasts, setBroadcasts] = useState<{ id: string; title: string; message: string; type: string; created_at: string }[]>([]);
+
+  const loadBroadcasts = async () => {
+    const { data } = await supabase
+      .from('notifications')
+      .select('id, title, message, type, created_at')
+      .is('user_id', null)
+      .order('created_at', { ascending: false })
+      .limit(30);
+    setBroadcasts((data as any) || []);
+  };
+
+  useEffect(() => { loadBroadcasts(); }, []);
+
+  const deleteBroadcast = async (id: string) => {
+    const { error } = await supabase.from('notifications').delete().eq('id', id);
+    if (error) { toast.error('Failed to delete broadcast'); return; }
+    setBroadcasts(prev => prev.filter(b => b.id !== id));
+    toast.success('Broadcast deleted');
+  };
   const [sendingDigest, setSendingDigest] = useState(false);
   const [fetchingLocal, setFetchingLocal] = useState(false);
   const [repairingLocal, setRepairingLocal] = useState(false);
@@ -709,6 +729,7 @@ const Admin = () => {
       setBroadcastMsg('');
       setBroadcastTitle('');
       setBroadcastLink('');
+      loadBroadcasts();
     }
     setBroadcasting(false);
   };
@@ -1243,6 +1264,36 @@ const Admin = () => {
               {broadcasting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               Broadcast to all users
             </button>
+          </div>
+
+          {/* Sent broadcasts */}
+          <div className="mt-5 border-t border-border/40 pt-4">
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">Sent Broadcasts ({broadcasts.length})</h3>
+            {broadcasts.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No broadcasts sent yet.</p>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                {broadcasts.map(b => (
+                  <div key={b.id} className="flex items-start gap-3 bg-secondary/20 rounded-xl px-4 py-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs uppercase tracking-wide text-primary">{b.type}</span>
+                        <span className="text-xs text-muted-foreground">{new Date(b.created_at).toLocaleString()}</span>
+                      </div>
+                      <p className="text-sm font-medium truncate">{b.title}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{b.message}</p>
+                    </div>
+                    <button
+                      onClick={() => deleteBroadcast(b.id)}
+                      className="p-2 rounded-lg hover:bg-destructive/10 transition-colors shrink-0"
+                      title="Delete broadcast"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </motion.div>
 
