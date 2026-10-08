@@ -51,7 +51,7 @@ export function useProfile() {
   }, [load]);
 
   const updateProfile = useCallback(
-    async (patch: Partial<Pick<Profile, 'display_name' | 'bio' | 'handle' | 'is_public'>>) => {
+    async (patch: Partial<Pick<Profile, 'display_name' | 'bio' | 'handle' | 'is_public' | 'avatar_url'>>) => {
       if (!user) return { error: 'Not signed in' };
       const { error } = await supabase.from('profiles').update(patch).eq('id', user.id);
       if (error) return { error: error.message };
