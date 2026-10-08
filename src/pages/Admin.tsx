@@ -729,6 +729,7 @@ const Admin = () => {
       setBroadcastMsg('');
       setBroadcastTitle('');
       setBroadcastLink('');
+      loadBroadcasts();
     }
     setBroadcasting(false);
   };
