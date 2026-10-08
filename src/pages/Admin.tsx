@@ -97,6 +97,26 @@ const Admin = () => {
   const [broadcastLink, setBroadcastLink] = useState('');
   const [broadcastType, setBroadcastType] = useState('news');
   const [broadcasting, setBroadcasting] = useState(false);
+  const [broadcasts, setBroadcasts] = useState<{ id: string; title: string; message: string; type: string; created_at: string }[]>([]);
+
+  const loadBroadcasts = async () => {
+    const { data } = await supabase
+      .from('notifications')
+      .select('id, title, message, type, created_at')
+      .is('user_id', null)
+      .order('created_at', { ascending: false })
+      .limit(30);
+    setBroadcasts((data as any) || []);
+  };
+
+  useEffect(() => { loadBroadcasts(); }, []);
+
+  const deleteBroadcast = async (id: string) => {
+    const { error } = await supabase.from('notifications').delete().eq('id', id);
+    if (error) { toast.error('Failed to delete broadcast'); return; }
+    setBroadcasts(prev => prev.filter(b => b.id !== id));
+    toast.success('Broadcast deleted');
+  };
   const [sendingDigest, setSendingDigest] = useState(false);
   const [fetchingLocal, setFetchingLocal] = useState(false);
   const [repairingLocal, setRepairingLocal] = useState(false);
