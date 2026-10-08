@@ -29,6 +29,37 @@ const Profile = () => {
   const [selected, setSelected] = useState<PostDisplay | null>(null);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ display_name: '', bio: '', is_public: true });
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const uploadAvatar = async (file: File) => {
+    if (!user || !profile) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please choose an image file');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be under 5 MB');
+      return;
+    }
+    setUploadingAvatar(true);
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const path = `avatars/${user.id}/${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from('post-media').upload(path, file, { upsert: true });
+    if (upErr) {
+      toast.error('Upload failed — please try again');
+      setUploadingAvatar(false);
+      return;
+    }
+    const { data: urlData } = supabase.storage.from('post-media').getPublicUrl(path);
+    const res = await updateProfile({ avatar_url: urlData.publicUrl });
+    setUploadingAvatar(false);
+    if (res.error) {
+      toast.error(res.error);
+      return;
+    }
+    toast.success('Profile photo updated');
+    load();
+  };
 
   const isOwner = !!user && !!profile && user.id === profile.id;
 
@@ -109,8 +140,41 @@ const Profile = () => {
               className="glass-strong rounded-2xl p-6 sm:p-8 mb-8"
             >
               <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-                <div className="h-20 w-20 shrink-0 rounded-2xl bg-primary/15 text-primary flex items-center justify-center font-display text-2xl font-bold">
-                  {(profile.display_name || profile.handle).slice(0, 2).toUpperCase()}
+                <div className="relative shrink-0">
+                  {profile.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt={profile.display_name || profile.handle}
+                      className="h-20 w-20 rounded-2xl object-cover"
+                    />
+                  ) : (
+                    <div className="h-20 w-20 rounded-2xl bg-primary/15 text-primary flex items-center justify-center font-display text-2xl font-bold">
+                      {(profile.display_name || profile.handle).slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  {isOwner && (
+                    <label
+                      className={`absolute -bottom-1.5 -right-1.5 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg ${uploadingAvatar ? 'opacity-70 pointer-events-none' : 'cursor-pointer hover:scale-105 transition-transform'}`}
+                      title="Change profile photo"
+                    >
+                      {uploadingAvatar ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Camera className="h-3.5 w-3.5" />
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={uploadingAvatar}
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) uploadAvatar(file);
+                          e.target.value = '';
+                        }}
+                      />
+                    </label>
+                  )}
                 </div>
 
                 <div className="min-w-0 flex-1">
