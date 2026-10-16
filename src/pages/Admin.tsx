@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Trash2, Edit, Eye, EyeOff, Send, Bot, Plus, Save, X, Upload, BarChart3, Newspaper, Loader2, Megaphone, Rss, Users, CheckCircle2, Briefcase, Check, XCircle, Shield, FileText, Sparkles, MapPin, Globe } from 'lucide-react';
+import { Trash2, Edit, Eye, EyeOff, Send, Bot, Plus, Save, X, Upload, BarChart3, Newspaper, Loader2, Megaphone, Rss, Users, CheckCircle2, Briefcase, Check, XCircle, Shield, FileText, MapPin, Globe } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import Header from '@/components/Header';
 import SecurityTerminal from '@/components/SecurityTerminal';
@@ -1302,7 +1302,7 @@ const Admin = () => {
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass glow rounded-2xl p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display text-lg font-semibold flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" /> AI Draft Editor
+                AI Draft Editor
               </h2>
               <button onClick={() => setShowDraftEditor(false)} className="p-1 hover:bg-secondary/50 rounded-lg">
                 <X className="h-5 w-5" />

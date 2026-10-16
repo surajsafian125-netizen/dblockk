@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { ReactNode } from 'react';
-import { Sparkles } from 'lucide-react';
 
 interface Props {
   icon?: ReactNode;
@@ -24,7 +23,7 @@ const EmptyState = ({ icon, title, description, action, className = '' }: Props)
       >
         <div className="absolute inset-0 blur-2xl bg-primary/30 rounded-full" />
         <div className="relative h-14 w-14 rounded-2xl glass glow flex items-center justify-center text-primary">
-          {icon || <Sparkles className="h-6 w-6" />}
+          {icon}
         </div>
       </motion.div>
       <h3 className="font-display text-base font-semibold">{title}</h3>

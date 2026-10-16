@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, Lock, User as UserIcon, Eye, EyeOff, Sparkles, ArrowRight, Loader2, ShieldCheck, Zap, Globe2 } from 'lucide-react';
+import { X, Mail, Lock, User as UserIcon, Eye, EyeOff, ArrowRight, Loader2, ShieldCheck, Zap, Globe2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import loginWallpaper from '@/assets/login-wallpaper.jpeg.asset.json';
@@ -98,9 +98,6 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
 
             <div className="relative">
               <AppLogo className="mb-6 text-lg" />
-              <div className="inline-flex items-center gap-2 glass rounded-full px-3 py-1 text-[11px] text-primary mb-6">
-                <Sparkles className="h-3 w-3" />
-              </div>
               <h2 className="font-display text-4xl font-bold leading-tight mb-3 bg-gradient-to-br from-foreground to-primary bg-clip-text text-transparent">
                 {isSignup ? 'Join the frontier.' : 'Welcome back.'}
               </h2>
