@@ -166,6 +166,52 @@ const Admin = () => {
   };
 
 
+  // ---- News digest push: after a publishing burst, alert everyone with one local + one global story ----
+  const digestTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const digestSinceRef = useRef<string | null>(null);
+
+  const sendNewsDigest = async () => {
+    const since = digestSinceRef.current ?? new Date(Date.now() - 3600_000).toISOString();
+    digestSinceRef.current = null;
+    digestTimerRef.current = null;
+    const { data: recent } = await supabase
+      .from('posts')
+      .select('id, title, news_category, created_at')
+      .eq('published', true)
+      .order('created_at', { ascending: false })
+      .limit(200);
+    const { data: pubIds } = { data: null as null };
+    void pubIds;
+    const pool = (recent ?? []).filter(p => publishedInSessionRef.current.has(p.id));
+    publishedInSessionRef.current.clear();
+    void since;
+    const local = pool.find(p => p.news_category === 'local');
+    const global = pool.find(p => (p.news_category ?? 'global') !== 'local');
+    const picks = [local, global].filter(Boolean) as { id: string; title: string }[];
+    if (!picks.length) return;
+    const message = picks.map(p => `• ${p.title}`).join('\n');
+    const { data: inserted, error } = await supabase.from('notifications').insert({
+      title: local && global ? "Fresh on D'Block: Local & World News" : "New on D'Block",
+      message,
+      type: 'news',
+      link: `/?post=${picks[0].id}`,
+    } as any).select('id').single();
+    if (error || !inserted) { console.error('[News digest] insert', error); return; }
+    const { data: push } = await supabase.functions.invoke('send-push', { body: { notificationId: inserted.id } });
+    toast.success('News alert sent to readers 🔔', {
+      description: push ? `Delivered to ${push.sent} device${push.sent === 1 ? '' : 's'}` : undefined,
+    });
+    loadBroadcasts();
+  };
+
+  const publishedInSessionRef = useRef<Set<string>>(new Set());
+  const queueNewsDigest = (postId?: string) => {
+    if (postId) publishedInSessionRef.current.add(postId);
+    if (!digestSinceRef.current) digestSinceRef.current = new Date().toISOString();
+    if (digestTimerRef.current) clearTimeout(digestTimerRef.current);
+    digestTimerRef.current = setTimeout(sendNewsDigest, 45_000);
+  };
+
   const publishDraftArticle = async (id: string) => {
     const { error } = await supabase
       .from('posts')
@@ -176,7 +222,8 @@ const Admin = () => {
       return;
     }
     setPosts(prev => prev.map(p => (p.id === id ? { ...p, status: 'published', published: true } : p)));
-    toast.success('Published to Home 🚀');
+    toast.success('Published to Home 🚀', { description: 'A news alert goes out to readers shortly.' });
+    queueNewsDigest(id);
   };
 
   const discardDraftArticle = async (id: string) => {
