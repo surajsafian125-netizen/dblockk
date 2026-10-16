@@ -37,7 +37,19 @@ Deno.serve(async (req) => {
   if (n.user_id) q = q.eq("user_id", n.user_id);
   const { data: subs } = await q;
 
-  const payload = JSON.stringify({ id: n.id, title: n.title || "D'Block", body: n.message, link: n.link || "/" });
+  // Resolve the lead article's photo from the saved notification, not client input.
+  let image: string | undefined;
+  const postId = new URL(n.link || "/", "https://dblockk.lovable.app").searchParams.get("post");
+  if (postId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(postId)) {
+    const { data: post } = await db.from("posts").select("image_url").eq("id", postId).eq("published", true).maybeSingle();
+    if (post?.image_url) {
+      try {
+        const url = new URL(post.image_url);
+        if (url.protocol === "https:") image = url.href;
+      } catch { /* Articles without a valid image still receive text alerts. */ }
+    }
+  }
+  const payload = JSON.stringify({ id: n.id, title: n.title || "D'Block", body: n.message, link: n.link || "/", image });
   let sent = 0;
   const stale: string[] = [];
   await Promise.all((subs ?? []).map(async (s) => {
