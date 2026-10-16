@@ -1,4 +1,4 @@
-import { Search, Sparkles } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 
@@ -12,7 +12,6 @@ const GlassSearchBar = () => {
       animate={{ scale: focused ? 1.02 : 1 }}
     >
       <div className="flex items-center gap-3 px-4 py-3">
-        <Sparkles className="h-5 w-5 text-primary animate-glow-pulse flex-shrink-0" />
         <input
           type="text"
           placeholder="AI-Powered: Ask anything..."

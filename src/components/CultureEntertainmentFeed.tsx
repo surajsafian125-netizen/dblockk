@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Heart, MessageCircle, Eye, Clock, ExternalLink, X, RefreshCw,
-  Sparkles, Share2, Bookmark,
+  Share2, Bookmark,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -283,7 +283,6 @@ const CultureEntertainmentFeed = () => {
             viewport={{ once: true }}
             className="flex items-center gap-3 flex-wrap min-w-0"
           >
-            <Sparkles className="h-6 w-6 text-accent shrink-0" />
             <h2 className="font-display text-2xl sm:text-3xl font-bold">
               Culture & Entertainment <span className="text-accent">Feed</span>
             </h2>
@@ -321,7 +320,6 @@ const CultureEntertainmentFeed = () => {
 
         {error && !loading && (
           <div className="glass glow rounded-2xl p-8 text-center">
-            <Sparkles className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
             <p className="text-muted-foreground text-sm">Could not load the culture feed. Please try again.</p>
           </div>
         )}
