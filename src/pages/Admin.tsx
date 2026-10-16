@@ -171,7 +171,6 @@ const Admin = () => {
   const digestSinceRef = useRef<string | null>(null);
 
   const sendNewsDigest = async () => {
-    const since = digestSinceRef.current ?? new Date(Date.now() - 3600_000).toISOString();
     digestSinceRef.current = null;
     digestTimerRef.current = null;
     const { data: recent } = await supabase
@@ -180,11 +179,8 @@ const Admin = () => {
       .eq('published', true)
       .order('created_at', { ascending: false })
       .limit(200);
-    const { data: pubIds } = { data: null as null };
-    void pubIds;
     const pool = (recent ?? []).filter(p => publishedInSessionRef.current.has(p.id));
     publishedInSessionRef.current.clear();
-    void since;
     const local = pool.find(p => p.news_category === 'local');
     const global = pool.find(p => (p.news_category ?? 'global') !== 'local');
     const picks = [local, global].filter(Boolean) as { id: string; title: string }[];
@@ -595,13 +591,14 @@ const Admin = () => {
         return;
       }
 
-      const { error } = await supabase.from('posts').insert({
+      const { data: created, error } = await supabase.from('posts').insert({
         ...postData,
         user_id: userData.user.id,
         published: true,
         status: 'published',
-      });
+      }).select('id').single();
 
+      if (!error && created) queueNewsDigest(created.id);
       if (error) {
         const fullError = formatSupabaseError(error) || 'Create failed';
         console.error('[Create/Edit Post] Insert error:', error);
@@ -868,7 +865,7 @@ const Admin = () => {
       const readingTime = Math.max(1, Math.ceil(finalDraft.split(/\s+/).length / 200));
       const bodyContent = finalDraft.replace(/^#\s+.+\n*/m, '').trim();
 
-      const { error } = await supabase.from('posts').insert({
+      const { data: aiCreated, error } = await supabase.from('posts').insert({
         title: finalTitle,
         content: bodyContent,
         description: bodyContent.replace(/[#*!\[\]()]/g, '').slice(0, 120),
@@ -883,7 +880,8 @@ const Admin = () => {
         engagement_score: 0,
         reading_time: readingTime,
         is_trending: false,
-      });
+      }).select('id').single();
+      if (!error && aiCreated) queueNewsDigest(aiCreated.id);
 
       if (error) {
         toast.error(formatSupabaseError(error));
