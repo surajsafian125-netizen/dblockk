@@ -1,6 +1,9 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
+import { isEmailConfirmed } from '@/lib/authUser';
+import { normalizeEmail, validateSignupEmail } from '@/lib/emailValidation';
+import { signInWithGoogle } from '@/lib/googleAuth';
 
 interface AuthContextType {
   user: User | null;
@@ -8,7 +11,11 @@ interface AuthContextType {
   isLoading: boolean;
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<{ error?: string }>;
-  signup: (name: string, email: string, password: string) => Promise<{ error?: string }>;
+  signup: (
+    name: string,
+    email: string,
+    password: string,
+  ) => Promise<{ error?: string; needsConfirmation?: boolean }>;
   loginWithGoogle: () => Promise<{ error?: string }>;
   logout: () => Promise<void>;
 }
@@ -36,7 +43,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const applySession = (session: Session | null, { initial = false } = {}) => {
       if (!mountedRef.current) return;
-      const nextUser = session?.user ?? null;
+      const rawUser = session?.user ?? null;
+      if (rawUser && !isEmailConfirmed(rawUser)) {
+        lastUserIdRef.current = null;
+        setUser(null);
+        setIsAdmin(false);
+        adminCheckTokenRef.current++;
+        if (initial) setIsLoading(false);
+        setTimeout(() => {
+          supabase.auth.signOut();
+        }, 0);
+        return;
+      }
+      const nextUser = rawUser;
       const nextUserId = nextUser?.id ?? null;
       const userChanged = nextUserId !== lastUserIdRef.current;
 
@@ -101,14 +120,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: normalizeEmail(email),
+      password,
+    });
     if (error) return { error: error.message };
+    if (data.user && !isEmailConfirmed(data.user)) {
+      await supabase.auth.signOut();
+      return { error: 'Please check your inbox to confirm your email before signing in.' };
+    }
     return {};
   };
 
   const signup = async (name: string, email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
+    const emailError = validateSignupEmail(email);
+    if (emailError) return { error: emailError };
+
+    const { data, error } = await supabase.auth.signUp({
+      email: normalizeEmail(email),
       password,
       options: {
         data: { full_name: name },
@@ -116,20 +145,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       },
     });
     if (error) return { error: error.message };
+    if (!data.session) return { needsConfirmation: true };
+    if (data.user && !isEmailConfirmed(data.user)) {
+      await supabase.auth.signOut();
+      return { needsConfirmation: true };
+    }
     return {};
   };
 
-  const loginWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/`,
-        queryParams: { access_type: 'offline', prompt: 'consent' },
-      },
-    });
-    if (error) return { error: error.message };
-    return {};
-  };
+  const loginWithGoogle = () => signInWithGoogle();
 
   const logout = async () => {
     // Clear local state first to prevent any guarded UI from re-firing
@@ -143,7 +167,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AuthContext.Provider value={{
       user,
-      isAuthenticated: !!user,
+      isAuthenticated: isEmailConfirmed(user),
       isLoading,
       isAdmin,
       login,

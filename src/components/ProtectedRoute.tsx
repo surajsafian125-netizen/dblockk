@@ -23,6 +23,8 @@ const ProtectedRoute = ({ children }: Props) => {
     }
   }, [isAuthenticated]);
 
+  // Unconfirmed accounts have no session (or are signed out in AuthProvider),
+  // so they never pass isAuthenticated and cannot reach protected views.
   if (isAuthenticated) return <>{children}</>;
 
   return (

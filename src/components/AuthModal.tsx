@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, Lock, User as UserIcon, Eye, EyeOff, ArrowRight, Loader2, ShieldCheck, Zap, Globe2 } from 'lucide-react';
+import { X, Mail, Lock, User as UserIcon, Eye, EyeOff, ArrowRight, Loader2, ShieldCheck, Zap, Globe2, Inbox, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { validateSignupEmail } from '@/lib/emailValidation';
 import loginWallpaper from '@/assets/login-wallpaper.jpeg.asset.json';
 import AppLogo from './AppLogo';
-
 
 interface AuthModalProps {
   mode: 'login' | 'signup' | null;
@@ -21,6 +22,44 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState('');
+
+  // 60-second cooldown state
+  const [cooldown, setCooldown] = useState(0);
+  const [resending, setResending] = useState(false);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (cooldown > 0) {
+      timer = setTimeout(() => setCooldown((prev) => prev - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [cooldown]);
+
+  const handleResendEmail = async () => {
+    if (cooldown > 0 || resending || !pendingEmail) return;
+
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: pendingEmail,
+      });
+
+      if (error) {
+        toast.error(error.message || 'Failed to resend confirmation email.');
+        return;
+      }
+
+      toast.success('Verification email resent! Check your inbox.');
+      setCooldown(60);
+    } catch {
+      toast.error('An unexpected error occurred. Please try again.');
+    } finally {
+      setResending(false);
+    }
+  };
 
   const handleGoogle = async () => {
     setGoogleLoading(true);
@@ -35,21 +74,58 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
 
   const isSignup = mode === 'signup';
 
+  const resetForm = () => {
+    setName('');
+    setEmail('');
+    setPassword('');
+    setAwaitingConfirmation(false);
+    setPendingEmail('');
+    setCooldown(0);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  const handleSwitch = (next: 'login' | 'signup') => {
+    setAwaitingConfirmation(false);
+    setCooldown(0);
+    onSwitch(next);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode === 'signup') {
+      const emailError = validateSignupEmail(email);
+      if (emailError) {
+        toast.error(emailError);
+        return;
+      }
+    }
     setLoading(true);
     try {
       if (mode === 'login') {
         const result = await login(email, password);
         if (result.error) return toast.error(result.error);
         toast.success('Welcome back!');
-      } else {
-        const result = await signup(name, email, password);
-        if (result.error) return toast.error(result.error);
-        toast.success('Account created! Check your email to confirm.');
+        resetForm();
+        onClose();
+        return;
       }
+
+      const result = await signup(name, email, password);
+      if (result.error) return toast.error(result.error);
+      if (result.needsConfirmation) {
+        setPendingEmail(email.trim());
+        setAwaitingConfirmation(true);
+        setCooldown(60); // Start 60-second cooldown immediately after signup
+        setPassword('');
+        return;
+      }
+      toast.success('Welcome to D\'Block!');
+      resetForm();
       onClose();
-      setName(''); setEmail(''); setPassword('');
     } finally {
       setLoading(false);
     }
@@ -62,7 +138,7 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-hidden"
-        onClick={onClose}
+        onClick={handleClose}
       >
         {/* Full-screen wallpaper backdrop */}
         <img
@@ -94,7 +170,6 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
             <div className="absolute inset-0 bg-gradient-to-br from-background/85 via-background/60 to-primary/30" />
             <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-primary/30 blur-3xl" />
             <div className="absolute -bottom-32 -right-16 w-80 h-80 rounded-full bg-accent/20 blur-3xl" />
-
 
             <div className="relative">
               <AppLogo className="mb-6 text-lg" />
@@ -143,7 +218,7 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
             <div className="relative">
 
             <button
-              onClick={onClose}
+              onClick={handleClose}
               aria-label="Close"
               className="absolute top-4 right-4 glass rounded-full p-2 text-muted-foreground hover:text-foreground glass-hover transition-all"
             >
@@ -153,13 +228,69 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
             <div className="mb-6">
               <AppLogo className="mb-4 text-lg md:hidden" />
               <h3 className="font-display text-2xl font-bold mb-1">
-                {isSignup ? 'Create your account' : 'Log in to D\u2019Block'}
+                {awaitingConfirmation
+                  ? 'Confirm your email'
+                  : isSignup
+                    ? 'Create your account'
+                    : 'Log in to D\u2019Block'}
               </h3>
               <p className="text-sm text-muted-foreground">
-                {isSignup ? 'Free forever. No card required.' : 'Enter your details to continue.'}
+                {awaitingConfirmation
+                  ? 'We sent a confirmation link. You can sign in after you confirm.'
+                  : isSignup
+                    ? 'Free forever. No card required.'
+                    : 'Enter your details to continue.'}
               </p>
             </div>
 
+            {awaitingConfirmation ? (
+              <div className="glass rounded-2xl p-6 text-center space-y-4">
+                <div className="mx-auto w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
+                  <Inbox className="h-6 w-6 text-primary" />
+                </div>
+                <p className="text-sm text-foreground leading-relaxed">
+                  Please check your inbox to confirm your email
+                  {pendingEmail ? (
+                    <>
+                      {' '}
+                      <span className="font-medium text-primary break-all">{pendingEmail}</span>
+                    </>
+                  ) : null}
+                  .
+                </p>
+
+                {/* Resend button with 60-second cooldown */}
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={handleResendEmail}
+                    disabled={cooldown > 0 || resending}
+                    className="inline-flex items-center justify-center gap-2 text-xs font-medium text-primary hover:text-primary/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed glass px-4 py-2 rounded-lg"
+                  >
+                    {resending ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className={`h-3.5 w-3.5 ${cooldown > 0 ? '' : 'hover:rotate-180 transition-transform'}`} />
+                    )}
+                    {cooldown > 0 ? `Resend email in ${cooldown}s` : 'Resend verification email'}
+                  </button>
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  Didn&apos;t get it? Check spam, then try signing up again with a real address.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => handleSwitch('login')}
+                  className="w-full bg-primary text-primary-foreground rounded-xl py-3 font-medium hover:opacity-90 transition-all inline-flex items-center justify-center gap-2 mt-2"
+                >
+                  I&apos;ve confirmed — log in
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <>
             <button
               type="button"
               onClick={handleGoogle}
@@ -252,7 +383,7 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
             <p className="text-center text-sm text-muted-foreground mt-6">
               {isSignup ? 'Already have an account? ' : "Don't have an account? "}
               <button
-                onClick={() => onSwitch(isSignup ? 'login' : 'signup')}
+                onClick={() => handleSwitch(isSignup ? 'login' : 'signup')}
                 className="text-primary hover:underline font-medium"
               >
                 {isSignup ? 'Log in' : 'Sign up'}
@@ -262,6 +393,8 @@ const AuthModal = ({ mode, onClose, onSwitch }: AuthModalProps) => {
             <p className="text-[10px] text-center text-muted-foreground/70 mt-4 leading-relaxed">
               By continuing you agree to D'Block's Terms & Privacy Policy.
             </p>
+              </>
+            )}
             </div>
           </div>
 
