@@ -1,21 +1,39 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
-import stadium from '@/assets/option1-stadium-night.jpg.asset.json';
-import glass from '@/assets/option2-glass-abstract.jpg.asset.json';
-import neon from '@/assets/option3-city-neon.jpg.asset.json';
-import fluid from '@/assets/option4-fluid-dark.jpg.asset.json';
-import ocean from '@/assets/option5-ocean-life.jpg.asset.json';
-import desert from '@/assets/option6-desert-wind.jpg.asset.json';
 
 export type WallpaperId = 'stadium' | 'glass' | 'neon' | 'fluid' | 'ocean' | 'desert';
 export type WallpaperChoice = WallpaperId | 'auto' | 'off';
 
 export const WALLPAPERS: { id: WallpaperId; label: string; url: string }[] = [
-  { id: 'stadium', label: 'Stadium Night', url: stadium.url },
-  { id: 'glass', label: 'Glass Abstract', url: glass.url },
-  { id: 'neon', label: 'City Neon', url: neon.url },
-  { id: 'fluid', label: 'Fluid Dark', url: fluid.url },
-  { id: 'ocean', label: 'Ocean Life', url: ocean.url },
-  { id: 'desert', label: 'Desert Wind', url: desert.url },
+  { 
+    id: 'stadium', 
+    label: 'Stadium Night', 
+    url: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1920&q=80' 
+  },
+  { 
+    id: 'glass', 
+    label: 'Glass Abstract', 
+    url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=80' 
+  },
+  { 
+    id: 'neon', 
+    label: 'City Neon', 
+    url: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1920&q=80' 
+  },
+  { 
+    id: 'fluid', 
+    label: 'Fluid Dark', 
+    url: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1920&q=80' 
+  },
+  { 
+    id: 'ocean', 
+    label: 'Ocean Life', 
+    url: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1920&q=80' 
+  },
+  { 
+    id: 'desert', 
+    label: 'Desert Wind', 
+    url: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1920&q=80' 
+  },
 ];
 
 const STORAGE_KEY = 'dblock-wallpaper';
